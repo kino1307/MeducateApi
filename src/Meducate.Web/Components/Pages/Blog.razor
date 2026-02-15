@@ -1,0 +1,52 @@
+@page "/blog"
+
+<SeoHead Title="Blog | Medical API Insights | Meducate API"
+         Description="Developer insights and guides on medical APIs and structured health data from the Meducate API team."
+         Canonical="https://meducateapi.com/blog">
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://meducateapi.com/"
+            },
+            {
+                "@@type": "ListItem",
+                "position": 2,
+                "name": "Blog",
+                "item": "https://meducateapi.com/blog"
+            }
+        ]
+    }
+    </script>
+</SeoHead>
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9 col-lg-8">
+
+            <BreadcrumbNav PageName="Blog" />
+
+            <h1 class="fw-bold mb-3">Blog</h1>
+            <p class="lead">Guides and resources for developers building health applications with structured medical data.</p>
+
+            <hr>
+
+            <div class="mt-4">
+                <h2 class="h5 fw-semibold"><a href="/blog/what-is-a-medical-data-api" class="text-decoration-none">What Is a Medical Data API and Why Your Health App Needs One</a></h2>
+                <p class="text-muted small mb-1">Developer Guide · Medical Data API</p>
+                <p>An introduction to medical data APIs: what they are, the problems they solve, and how they compare to building and maintaining your own medical database. Includes examples for EHR integrations, symptom checkers, and health apps.</p>
+                <a href="/blog/what-is-a-medical-data-api" class="btn btn-sm btn-outline-primary">Read article</a>
+            </div>
+
+            <hr>
+
+            <p class="text-muted mt-4">Ready to start building? <a href="/register">Create a free account</a> and get your API key in minutes.</p>
+
+        </div>
+    </div>
+</div>
