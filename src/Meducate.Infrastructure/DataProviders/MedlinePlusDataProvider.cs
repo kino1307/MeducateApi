@@ -14,11 +14,11 @@ internal sealed partial class MedlinePlusDataProvider(HttpClient httpClient, ILo
     private List<ParsedTopic>? _cachedTopics;
     private readonly SemaphoreSlim _cacheLock = new(1, 1);
 
-    // Portal page capped lower to leave room for the encyclopedia article
-    private const int MaxPortalPageChars = 4_000;
+    // Portal page — increased to capture treatment sections that appear late on the page
+    private const int MaxPortalPageChars = 7_000;
 
-    // Encyclopedia article gets the bulk of the budget
-    private const int MaxEncyclopediaChars = 10_000;
+    // Each encyclopedia article — two may be fetched, so budget is split
+    private const int MaxEncyclopediaChars = 6_000;
 
     // Throttle between fetches to avoid rate-limiting MedlinePlus
     private static readonly TimeSpan PageFetchDelay = TimeSpan.FromMilliseconds(300);
@@ -183,8 +183,16 @@ internal sealed partial class MedlinePlusDataProvider(HttpClient httpClient, ILo
                     (s.Url.Contains("/ency/article/", StringComparison.OrdinalIgnoreCase)
                      || s.Url.Contains("/ency/patientinstructions/", StringComparison.OrdinalIgnoreCase))
                     && !s.Url.Contains("/spanish/ency/", StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(s => s.SiteTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                    .Count(w => titleWords.Contains(w.ToLowerInvariant().TrimEnd('.', ',', ';', ':'))))
+                .OrderByDescending(s =>
+                {
+                    var words = s.SiteTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var matchCount = words.Count(w => titleWords.Contains(w.ToLowerInvariant().TrimEnd('.', ',', ';', ':')));
+                    // Ratio rewards focused titles (e.g. "Asthma" ranks above "Allergies, asthma, and dust")
+                    var ratio = words.Length > 0 ? (double)matchCount / words.Length : 0;
+                    // /ency/article/ entries are main condition articles; patient instructions are supplementary
+                    var articleBonus = s.Url.Contains("/ency/article/", StringComparison.OrdinalIgnoreCase) ? 0.1 : 0.0;
+                    return ratio + articleBonus;
+                })
                 .Select(s => s.Url)
                 .Distinct()
                 .Take(2)
@@ -200,13 +208,14 @@ internal sealed partial class MedlinePlusDataProvider(HttpClient httpClient, ILo
 
     private async Task<string?> FetchFirstEncyclopediaArticleAsync(List<string> urls, CancellationToken ct)
     {
+        var parts = new List<string>();
         foreach (var url in urls)
         {
             var text = await FetchPageTextAsync(url, MaxEncyclopediaChars, ct);
             if (!string.IsNullOrWhiteSpace(text))
-                return text;
+                parts.Add(text);
         }
-        return null;
+        return parts.Count > 0 ? string.Join("\n\n---\n\n", parts) : null;
     }
 
     private async Task<string?> FetchPageTextAsync(string? url, int maxChars, CancellationToken ct)
