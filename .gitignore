@@ -46,7 +46,11 @@ Desktop.ini
 *.sln.iml
 
 ## Claude Code
-.claude/
+.claude/*
+!.claude/memory/
+.claude/memory/*
+!.claude/memory/MEMORY.md
+!.claude/memory/architecture.md
 
 ## Windows reserved names
 nul
