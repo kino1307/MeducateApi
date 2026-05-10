@@ -213,6 +213,57 @@ internal sealed class EmailService(IResend resend, IMemoryCache cache, ILogger<E
             $"rate limit warning to {MaskEmail(email)}");
     }
 
+    public Task<EmailResult> SendDataIntegrityAlertAsync(
+        string email,
+        int failureCount,
+        int warningCount,
+        int batchChecked,
+        int batchIndex,
+        int totalBatches,
+        IReadOnlyList<string> failureDetails)
+    {
+        var failureRows = failureDetails.Count > 0
+            ? string.Join("", failureDetails.Select(f => $"<li>{WebUtility.HtmlEncode(f)}</li>"))
+            : "<li>No details available</li>";
+
+        var failurePlainRows = failureDetails.Count > 0
+            ? string.Join("\n", failureDetails.Select(f => $"  - {f}"))
+            : "  - No details available";
+
+        var body = $"""
+            <p>The nightly data integrity check found <strong>{failureCount} failure(s)</strong> and {warningCount} warning(s) in the topic dataset.</p>
+
+            <ul>
+                <li>Batch checked: {batchIndex + 1} of {totalBatches} ({batchChecked} topics)</li>
+                <li>Failures: {failureCount}</li>
+                <li>Warnings: {warningCount}</li>
+            </ul>
+
+            <p><strong>Failures:</strong></p>
+            <ul>
+                {failureRows}
+            </ul>
+
+            <p>Check the Hangfire dashboard for the full job log.</p>
+            """;
+
+        var plainText = $"""
+            The nightly data integrity check found {failureCount} failure(s) and {warningCount} warning(s).
+
+            Batch checked: {batchIndex + 1} of {totalBatches} ({batchChecked} topics)
+            Failures: {failureCount}
+            Warnings: {warningCount}
+
+            Failures:
+            {failurePlainRows}
+
+            Check the Hangfire dashboard for the full job log.
+            """;
+
+        return SendAsync(email, $"MeducateAPI: data integrity check failed ({failureCount} issue(s))", body, plainText,
+            $"data integrity alert to {MaskEmail(email)}");
+    }
+
     internal static string FormatRetryAfter(DateTime retryAfter)
     {
         var remaining = retryAfter - DateTime.UtcNow;

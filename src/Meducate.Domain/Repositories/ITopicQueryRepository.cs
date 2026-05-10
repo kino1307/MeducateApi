@@ -9,6 +9,8 @@ internal interface ITopicQueryRepository
     Task<List<HealthTopic>> GetTopicsNeedingReprocessingAsync(CancellationToken ct);
     Task<List<HealthTopic>> GetUncategorizedTopicsAsync(CancellationToken ct);
     Task<List<HealthTopic>> GetTopicsNeedingCategoryAsync(IReadOnlyCollection<string> validCategories, CancellationToken ct);
+    Task<int> GetServedTopicCountAsync(CancellationToken ct);
+    Task<List<HealthTopic>> GetServedTopicBatchAsync(int skip, int take, CancellationToken ct);
     Task<List<HealthTopic>> GetUnclassifiedTopicsAsync(CancellationToken ct);
     Task<HealthTopic?> GetByNameTrackedAsync(string name, CancellationToken ct);
     Task<List<HealthTopic>> GetByNamesTrackedAsync(IEnumerable<string> names, CancellationToken ct);

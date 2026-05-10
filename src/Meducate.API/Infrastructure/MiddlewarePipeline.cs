@@ -68,6 +68,11 @@ internal static class MiddlewarePipeline
             job => job.ExecuteAsync(JobCancellationToken.Null),
             "0 3 * * *"); // 3 AM UTC
 
+        jobManager.AddOrUpdate<DataIntegrityCheckJob>(
+            "data-integrity-check",
+            job => job.ExecuteAsync(JobCancellationToken.Null),
+            "0 4 * * *"); // 4 AM UTC — runs after refresh completes
+
         if (!app.Environment.IsDevelopment())
         {
             var jobClient = app.Services.GetRequiredService<IBackgroundJobClient>();

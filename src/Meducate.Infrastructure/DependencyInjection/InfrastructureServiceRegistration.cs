@@ -88,6 +88,8 @@ internal static class InfrastructureServiceRegistration
         services.AddScoped<TopicRefreshService>();
         services.AddScoped<TopicRefreshJob>();
         services.AddScoped<TopicDiscoveryJob>();
+        services.AddScoped<DataIntegrityCheckService>();
+        services.AddScoped<DataIntegrityCheckJob>();
 
         // API keys
         services.AddScoped<ApiKeyService>();

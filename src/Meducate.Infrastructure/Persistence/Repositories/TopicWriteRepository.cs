@@ -36,6 +36,17 @@ internal sealed class TopicWriteRepository(MeducateDbContext db) : ITopicWriteRe
             .Where(c => c.Category == null || !validCategories.Contains(c.Category))
             .ToListAsync(ct);
 
+    public async Task<int> GetServedTopicCountAsync(CancellationToken ct) =>
+        await _db.HealthTopics.CountAsync(c => c.Category != null, ct);
+
+    public async Task<List<HealthTopic>> GetServedTopicBatchAsync(int skip, int take, CancellationToken ct) =>
+        await _db.HealthTopics
+            .Where(c => c.Category != null)
+            .OrderBy(c => c.Name)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(ct);
+
     public async Task<List<HealthTopic>> GetUnclassifiedTopicsAsync(CancellationToken ct) =>
         await _db.HealthTopics
             .Where(c => c.TopicType == null || c.TopicType == "Other")
