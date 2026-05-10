@@ -19,7 +19,9 @@ internal static class InternalEndpoints
     {
         app.MapPost("/internal/jobs/{jobName}", Handle);
         app.MapGet("/internal/jobs/{jobName}/last-run", HandleLastRun);
-        app.MapGet("/internal/topics/sample", HandleTopicSample);
+        app.MapGet("/internal/topics/sample",
+            (HttpContext http, ITopicQueryRepository queryRepo, IConfiguration config, ILoggerFactory loggerFactory, int count = 10, CancellationToken ct = default)
+                => HandleTopicSample(http, queryRepo, config, loggerFactory, count, ct));
         return app;
     }
 
