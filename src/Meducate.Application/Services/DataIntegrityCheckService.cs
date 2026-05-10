@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Hangfire.Console;
 using Hangfire.Server;
 using Meducate.Domain.Repositories;
@@ -7,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Meducate.Application.Services;
 
-internal sealed class DataIntegrityCheckService(
+internal sealed partial class DataIntegrityCheckService(
     ITopicQueryRepository queryRepo,
     ILLMProcessor llmProcessor,
     IEmailService emailService,
@@ -21,6 +22,7 @@ internal sealed class DataIntegrityCheckService(
     private readonly ILogger<DataIntegrityCheckService> _logger = logger;
 
     internal const int BatchSize = 50;
+    private const double OverlapWarnThreshold = 0.25;
 
     internal async Task RunAsync(PerformContext? console, CancellationToken ct)
     {
@@ -108,6 +110,20 @@ internal sealed class DataIntegrityCheckService(
                 _logger.LogWarning("Data integrity [WARN] {Message}", msg);
                 console?.WriteLine($"  [WARN] {msg}");
             }
+
+            // Keyword overlap: check summary terms are grounded in the stored source text.
+            // Skip if RawSource is absent or too short to be meaningful.
+            if (!string.IsNullOrWhiteSpace(topic.RawSource) && topic.RawSource.Length >= 100)
+            {
+                var score = ComputeOverlapScore(topic.Summary!, topic.RawSource);
+                if (score < OverlapWarnThreshold)
+                {
+                    var msg = $"{topic.Name}: low keyword overlap with source ({score:P0}) — possible hallucination or stale content";
+                    warnings.Add(msg);
+                    _logger.LogWarning("Data integrity [WARN] {Message}", msg);
+                    console?.WriteLine($"  [WARN] {msg}");
+                }
+            }
         }
 
         _logger.LogInformation(
@@ -136,4 +152,46 @@ internal sealed class DataIntegrityCheckService(
                 failures);
         }
     }
+
+    // Returns the fraction of meaningful summary terms that also appear in the source text.
+    // A low score suggests the summary contains terms not grounded in the source.
+    internal static double ComputeOverlapScore(string summary, string rawSource)
+    {
+        var summaryTerms = ExtractTerms(summary);
+        if (summaryTerms.Count == 0)
+            return 1.0; // nothing to check
+
+        var sourceTerms = ExtractTerms(rawSource);
+        var matched = summaryTerms.Count(t => sourceTerms.Contains(t));
+        return (double)matched / summaryTerms.Count;
+    }
+
+    private static HashSet<string> ExtractTerms(string text)
+    {
+        return new HashSet<string>(
+            TermSplitRegex().Split(text.ToLowerInvariant())
+                .Where(w => w.Length >= 4 && !StopWords.Contains(w)),
+            StringComparer.Ordinal);
+    }
+
+    // Common English and medical-context words that carry no diagnostic signal
+    private static readonly HashSet<string> StopWords = new(StringComparer.Ordinal)
+    {
+        "also", "been", "both", "each", "from", "have", "help", "here",
+        "high", "into", "just", "know", "lead", "like", "long", "made",
+        "make", "many", "more", "most", "much", "must", "need", "only",
+        "other", "over", "some", "such", "take", "than", "that", "them",
+        "then", "there", "these", "they", "this", "those", "time", "used",
+        "very", "well", "when", "with", "your",
+        // Medical boilerplate
+        "body", "care", "case", "days", "does", "each", "find", "gets",
+        "health", "help", "include", "including", "information", "known",
+        "lead", "like", "main", "medical", "often", "part", "people",
+        "person", "provider", "related", "result", "seen", "should",
+        "signs", "since", "still", "test", "type", "types", "usually",
+        "various", "while", "without",
+    };
+
+    [GeneratedRegex(@"[^a-z]+")]
+    private static partial Regex TermSplitRegex();
 }
