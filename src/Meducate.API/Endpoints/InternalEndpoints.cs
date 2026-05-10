@@ -20,8 +20,8 @@ internal static class InternalEndpoints
         app.MapPost("/internal/jobs/{jobName}", Handle);
         app.MapGet("/internal/jobs/{jobName}/last-run", HandleLastRun);
         app.MapGet("/internal/topics/sample",
-            (HttpContext http, ITopicQueryRepository queryRepo, IConfiguration config, ILoggerFactory loggerFactory, int count = 10, CancellationToken ct = default)
-                => HandleTopicSample(http, queryRepo, config, loggerFactory, count, ct));
+            (HttpContext http, ITopicQueryRepository queryRepo, IConfiguration config, ILoggerFactory loggerFactory, int count = 10, int? skip = null, CancellationToken ct = default)
+                => HandleTopicSample(http, queryRepo, config, loggerFactory, count, skip, ct));
         return app;
     }
 
@@ -111,6 +111,7 @@ internal static class InternalEndpoints
         IConfiguration config,
         ILoggerFactory loggerFactory,
         int count = 10,
+        int? skip = null,
         CancellationToken ct = default)
     {
         var logger = loggerFactory.CreateLogger("Meducate.API.Internal");
@@ -125,8 +126,8 @@ internal static class InternalEndpoints
             return Results.Problem("No served topics found.", statusCode: StatusCodes.Status404NotFound);
 
         var maxSkip = Math.Max(0, total - count);
-        var skip = Random.Shared.Next(0, maxSkip + 1);
-        var topics = await queryRepo.GetServedTopicBatchAsync(skip, count, ct);
+        var resolvedSkip = skip.HasValue ? Math.Clamp(skip.Value, 0, maxSkip) : Random.Shared.Next(0, maxSkip + 1);
+        var topics = await queryRepo.GetServedTopicBatchAsync(resolvedSkip, count, ct);
 
         var result = topics.Select(t => new
         {
@@ -145,6 +146,6 @@ internal static class InternalEndpoints
                 : null,
         });
 
-        return Results.Ok(new { total, skip, count = topics.Count, topics = result });
+        return Results.Ok(new { total, skip = resolvedSkip, count = topics.Count, topics = result });
     }
 }
