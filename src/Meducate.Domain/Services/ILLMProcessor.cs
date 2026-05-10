@@ -11,6 +11,7 @@ internal interface ILLMProcessor
     Task<BroaderNameResult> CompareBroaderNameAsync(string candidate, string existing, CancellationToken ct = default);
     Task<Dictionary<string, string>> MatchOriginalNamesAsync(IReadOnlyList<string> normalizedNames, IReadOnlyList<string> candidateNames, CancellationToken ct = default);
     bool ShouldProcessTopicType(string? topicType);
+    IReadOnlySet<string> GetValidCategories();
 }
 
 internal interface ILLMProcessorLogger

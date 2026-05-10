@@ -8,6 +8,7 @@ internal interface ITopicQueryRepository
     Task<List<HealthTopic>> GetTopicsNeedingRefreshAsync(DateTime cutoff, CancellationToken ct);
     Task<List<HealthTopic>> GetTopicsNeedingReprocessingAsync(CancellationToken ct);
     Task<List<HealthTopic>> GetUncategorizedTopicsAsync(CancellationToken ct);
+    Task<List<HealthTopic>> GetTopicsNeedingCategoryAsync(IReadOnlyCollection<string> validCategories, CancellationToken ct);
     Task<List<HealthTopic>> GetUnclassifiedTopicsAsync(CancellationToken ct);
     Task<HealthTopic?> GetByNameTrackedAsync(string name, CancellationToken ct);
     Task<List<HealthTopic>> GetByNamesTrackedAsync(IEnumerable<string> names, CancellationToken ct);

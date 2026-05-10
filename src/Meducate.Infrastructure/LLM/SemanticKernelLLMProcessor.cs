@@ -730,6 +730,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
         return !FilteredTopicTypes.Contains(topicType);
     }
 
+    public IReadOnlySet<string> GetValidCategories() => ValidCategories;
+
     private static readonly Dictionary<string, string> MandatoryTypeCategoryMappings = new(StringComparer.OrdinalIgnoreCase)
     {
         { "Drug", "Drugs & Medications" },
