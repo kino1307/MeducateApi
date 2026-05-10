@@ -22,6 +22,9 @@ internal static class InternalEndpoints
         app.MapGet("/internal/topics/sample",
             (HttpContext http, ITopicQueryRepository queryRepo, IConfiguration config, ILoggerFactory loggerFactory, int count = 10, int? skip = null, CancellationToken ct = default)
                 => HandleTopicSample(http, queryRepo, config, loggerFactory, count, skip, ct));
+        app.MapGet("/internal/topics/fact-check",
+            (HttpContext http, ITopicQueryRepository queryRepo, IConfiguration config, ILoggerFactory loggerFactory, int count = 5, int? skip = null, int rawSourceChars = 3000, CancellationToken ct = default)
+                => HandleTopicFactCheck(http, queryRepo, config, loggerFactory, count, skip, rawSourceChars, ct));
         return app;
     }
 
@@ -143,6 +146,52 @@ internal static class InternalEndpoints
             rawSourceLength = t.RawSource?.Length ?? 0,
             rawSourcePreview = t.RawSource is { Length: > 0 }
                 ? t.RawSource[..Math.Min(300, t.RawSource.Length)]
+                : null,
+        });
+
+        return Results.Ok(new { total, skip = resolvedSkip, count = topics.Count, topics = result });
+    }
+
+    private static async Task<IResult> HandleTopicFactCheck(
+        HttpContext http,
+        ITopicQueryRepository queryRepo,
+        IConfiguration config,
+        ILoggerFactory loggerFactory,
+        int count = 5,
+        int? skip = null,
+        int rawSourceChars = 3000,
+        CancellationToken ct = default)
+    {
+        var logger = loggerFactory.CreateLogger("Meducate.API.Internal");
+
+        var authError = CheckToken(http, config, logger, "topics/fact-check");
+        if (authError is not null) return authError;
+
+        count = Math.Clamp(count, 1, 10);
+        rawSourceChars = Math.Clamp(rawSourceChars, 500, 10000);
+
+        var total = await queryRepo.GetServedTopicCountAsync(ct);
+        if (total == 0)
+            return Results.Problem("No served topics found.", statusCode: StatusCodes.Status404NotFound);
+
+        var maxSkip = Math.Max(0, total - count);
+        var resolvedSkip = skip.HasValue ? Math.Clamp(skip.Value, 0, maxSkip) : Random.Shared.Next(0, maxSkip + 1);
+        var topics = await queryRepo.GetServedTopicBatchAsync(resolvedSkip, count, ct);
+
+        var result = topics.Select(t => new
+        {
+            t.Name,
+            t.Category,
+            t.TopicType,
+            t.Summary,
+            observations = t.Observations ?? [],
+            factors      = t.Factors ?? [],
+            actions      = t.Actions ?? [],
+            citations    = t.Citations ?? [],
+            tags         = t.Tags ?? [],
+            rawSourceLength  = t.RawSource?.Length ?? 0,
+            rawSource = t.RawSource is { Length: > 0 }
+                ? t.RawSource[..Math.Min(rawSourceChars, t.RawSource.Length)]
                 : null,
         });
 
