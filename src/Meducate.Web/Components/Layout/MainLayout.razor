@@ -8,15 +8,44 @@
             @Body
         </article>
     </main>
-    <footer class="border-top py-3 mt-auto">
-        <div class="container text-center text-muted small">
-            <span>&copy; @DateTime.UtcNow.Year Meducate API. For educational and informational purposes only.</span>
-            <br />
-            <a href="/privacy" class="text-muted">Privacy</a>
-            <span class="mx-1">&middot;</span>
-            <a href="/terms" class="text-muted">Terms</a>
-            <span class="mx-1">&middot;</span>
-            <a href="mailto:@_contactEmail" class="text-muted">@_contactEmail</a>
+    <footer class="border-top pt-4 pb-3 mt-auto">
+        <div class="container">
+            <div class="row mb-3 small">
+                <div class="col-6 col-md-3 mb-3">
+                    <p class="fw-semibold text-muted mb-2">API</p>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="/docs" class="text-muted text-decoration-none">Docs</a></li>
+                        <li><a href="/icd-10-api" class="text-muted text-decoration-none">ICD-10 API</a></li>
+                        <li><a href="/medical-data-api" class="text-muted text-decoration-none">Medical Data API</a></li>
+                        <li><a href="/health-topics-api" class="text-muted text-decoration-none">Health Topics API</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <p class="fw-semibold text-muted mb-2">Company</p>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="/use-cases" class="text-muted text-decoration-none">Use Cases</a></li>
+                        <li><a href="/pricing" class="text-muted text-decoration-none">Pricing</a></li>
+                        <li><a href="/blog" class="text-muted text-decoration-none">Blog</a></li>
+                        <li><a href="/faq" class="text-muted text-decoration-none">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <p class="fw-semibold text-muted mb-2">Legal</p>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="/privacy" class="text-muted text-decoration-none">Privacy</a></li>
+                        <li><a href="/terms" class="text-muted text-decoration-none">Terms</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <p class="fw-semibold text-muted mb-2">Contact</p>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="mailto:@_contactEmail" class="text-muted text-decoration-none">@_contactEmail</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-top pt-3 text-center text-muted small">
+                <span>&copy; @DateTime.UtcNow.Year Meducate API. For educational and informational purposes only.</span>
+            </div>
         </div>
     </footer>
 </div>

@@ -13,6 +13,7 @@ internal sealed class ApiService(HttpClient http, ILogger<ApiService> logger)
     };
 
     internal Task<ApiResult> RegisterUserAsync(string username, string? mode = null, string? termsVersion = null, string? website = null, string? timestamp = null, CancellationToken cancellationToken = default) => PostAsync("/api/users/register", new { email = username, mode, termsVersion, website, timestamp }, cancellationToken);
+    internal Task<ApiResult> WaitlistAsync(string email, CancellationToken cancellationToken = default) => PostAsync("/api/waitlist", new { email }, cancellationToken);
     internal Task<ApiResult> VerifyUserAsync(string token, CancellationToken cancellationToken = default) => PostAsync("/api/users/verify", new { token }, cancellationToken);
 
     internal async Task<ApiResult<Guid>> CreateOrganisationAsync(string organisationName, CancellationToken cancellationToken = default)

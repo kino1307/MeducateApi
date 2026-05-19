@@ -264,6 +264,36 @@ internal sealed class EmailService(IResend resend, IMemoryCache cache, ILogger<E
             $"data integrity alert to {MaskEmail(email)}");
     }
 
+    public async Task<EmailResult> SendWaitlistNotificationAsync(string submittedEmail)
+    {
+        // One signup attempt per email address per 24 hours
+        var cacheKey = $"waitlist:{submittedEmail.ToLowerInvariant()}";
+        if (_cache.TryGetValue(cacheKey, out _))
+            return new EmailResult(false);
+        _cache.Set(cacheKey, true, TimeSpan.FromHours(24));
+
+        var alertEmail = _config["Admin:AlertEmail"];
+        if (string.IsNullOrWhiteSpace(alertEmail))
+        {
+            _logger.LogWarning("Waitlist signup from {Email} but Admin:AlertEmail is not configured — signup not forwarded", MaskEmail(submittedEmail));
+            return new EmailResult(true); // Don't surface config gaps to users
+        }
+
+        var message = new EmailMessage
+        {
+            From = $"MeducateAPI <{_fromAddress}>",
+            To = alertEmail,
+            Subject = "New Pro waitlist signup",
+            HtmlBody = $"<p>New Pro waitlist signup from <strong>{WebUtility.HtmlEncode(submittedEmail)}</strong>.</p>",
+            TextBody = $"New Pro waitlist signup from {submittedEmail}."
+        };
+
+        _logger.LogInformation("Sending waitlist notification for {Email}", MaskEmail(submittedEmail));
+        await SendWithRetryAsync(message, $"waitlist notification for {MaskEmail(submittedEmail)}");
+        _logger.LogInformation("Sent waitlist notification for {Email}", MaskEmail(submittedEmail));
+        return new EmailResult(true);
+    }
+
     internal static string FormatRetryAfter(DateTime retryAfter)
     {
         var remaining = retryAfter - DateTime.UtcNow;
