@@ -12,6 +12,7 @@ internal sealed class EmailService(IResend resend, IMemoryCache cache, ILogger<E
     private readonly IResend _resend = resend;
     private readonly IMemoryCache _cache = cache;
     private readonly ILogger<EmailService> _logger = logger;
+    private readonly IConfiguration _config = config;
     private readonly string _fromAddress = config["Resend:FromAddress"] ?? "no-reply@meducateapi.com";
 
     private const int MaxRetries = 3;
