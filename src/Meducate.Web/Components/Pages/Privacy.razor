@@ -9,54 +9,9 @@
         <div class="col-md-9 col-lg-8">
 
             <h1 class="fw-bold mb-3">Privacy Policy</h1>
-            <p class="text-muted">Last updated: 2 March 2026</p>
 
-            <hr>
-
-            <h2 class="fw-semibold">Data we collect</h2>
-            <ul>
-                <li><strong>Email address:</strong> used for authentication (magic-link sign-in) and service notifications (e.g. rate limit warnings).</li>
-                <li><strong>API usage logs:</strong> endpoint, HTTP method, status code, query parameters, organisation name, and timestamp. Logged per API request for usage tracking and rate limiting.</li>
-                <li><strong>Cookies:</strong> we use two functional cookies: an authentication cookie (<code>meducateapi_auth</code>) and a theme preference cookie. Neither is used for tracking or advertising.</li>
-            </ul>
-
-            <h2 class="fw-semibold mt-4">What we do not collect</h2>
-            <ul>
-                <li>We do not collect IP addresses.</li>
-                <li>We do not use analytics, tracking pixels, or advertising cookies.</li>
-                <li>We do not collect passwords. Authentication is passwordless via email links.</li>
-            </ul>
-
-            <h2 class="fw-semibold mt-4">Purpose</h2>
-            <p>Data is collected solely to operate the service: authenticate users, enforce rate limits, monitor API usage, and send transactional emails.</p>
-
-            <h2 class="fw-semibold mt-4">Data retention</h2>
-            <p>Your data is retained for as long as your account exists. When you delete your account, all associated data (usage logs, API keys, organisation) is permanently deleted.</p>
-
-            <h2 class="fw-semibold mt-4">Third parties</h2>
-            <ul>
-                <li><strong>Resend:</strong> email delivery service. Receives your email address to send authentication and notification emails.</li>
-                <li><strong>OpenAI:</strong> used to process and structure medical topic data. No user personal data is sent to OpenAI.</li>
-            </ul>
-
-            <h2 class="fw-semibold mt-4">Data location</h2>
-            <p>Data is stored in the United States via Railway (hosting) and Resend (email). By using the service, you consent to this transfer.</p>
-
-            <h2 class="fw-semibold mt-4">Your rights</h2>
-            <p>You have the right to:</p>
-            <ul>
-                <li><strong>Access</strong> your data via the dashboard.</li>
-                <li><strong>Delete</strong> your account and all associated data from the dashboard settings.</li>
-                <li><strong>Data portability:</strong> contact us to request an export of your data.</li>
-            </ul>
-
-            <h2 class="fw-semibold mt-4">Contact</h2>
-            <p>For privacy-related requests, email <a href="mailto:@_contactEmail">@_contactEmail</a>.</p>
+            <PrivacyPolicyContent />
 
         </div>
     </div>
 </div>
-
-@code {
-    private static readonly string _contactEmail = string.Concat("will", "@", "meducateapi.com");
-}
