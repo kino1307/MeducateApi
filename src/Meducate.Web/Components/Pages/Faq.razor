@@ -1,7 +1,7 @@
 @page "/faq"
 
-<SeoHead Title="FAQ — Meducate API"
-         Description="Answers to common questions about Meducate API — pricing, data sources, ICD-10 coverage, authentication, and usage limits."
+<SeoHead Title="FAQ | Meducate API"
+         Description="Answers to common questions about Meducate API: pricing, data sources, topic categories, authentication, and usage limits."
          Canonical="https://meducateapi.com/faq">
     <script type="application/ld+json">
     {
@@ -13,15 +13,15 @@
                 "name": "What is Meducate API?",
                 "acceptedAnswer": {
                     "@@type": "Answer",
-                    "text": "Meducate API is a medical data REST API that provides structured, ICD-10 classified health topic data. It aggregates information from trusted sources like MedlinePlus and PubMed, processes it with LLMs, and serves it as consistent, developer-friendly JSON."
+                    "text": "Meducate API is a medical data REST API that provides structured, categorised health topic data. It aggregates information from trusted sources like MedlinePlus and PubMed, processes it with LLMs, and serves it as consistent, developer-friendly JSON."
                 }
             },
             {
                 "@@type": "Question",
-                "name": "What is ICD-10 and how is it used in the API?",
+                "name": "How are topics categorised?",
                 "acceptedAnswer": {
                     "@@type": "Answer",
-                    "text": "ICD-10 (International Classification of Diseases, 10th Revision) is the global standard for classifying medical conditions and diseases. Meducate API uses ICD-10 chapter categories to classify every health topic, so you can filter and group data by body system or condition type in a way that's compatible with clinical and healthcare systems."
+                    "text": "Meducate assigns every health topic to one of 24 categories grouped by body system (Respiratory, Circulatory, Digestive) and content type (Drugs & Medications, Diagnostic & Laboratory, Health & Wellness). This lets you filter and group topics by medical area. The categories organise educational content; they are not clinical diagnosis codes."
                 }
             },
             {
@@ -53,7 +53,7 @@
                 "name": "What data formats does the API return?",
                 "acceptedAnswer": {
                     "@@type": "Answer",
-                    "text": "The API returns JSON. Each health topic includes a name, description, ICD-10 category, topic type (Disease, Drug, Procedure, etc.), and structured content from multiple sources."
+                    "text": "The API returns JSON. Each health topic includes a name, description, category, topic type (Disease, Drug, Procedure, etc.), and structured content from multiple sources."
                 }
             },
             {
@@ -85,7 +85,7 @@
                 "name": "What endpoints are available?",
                 "acceptedAnswer": {
                     "@@type": "Answer",
-                    "text": "Meducate API exposes endpoints to search health topics by keyword, retrieve a specific topic by name, and filter topics by ICD-10 category or type. See the full endpoint reference in the documentation."
+                    "text": "Meducate API exposes endpoints to search health topics by keyword, retrieve a specific topic by name, and filter topics by category or type. See the full endpoint reference in the documentation."
                 }
             }
         ]
@@ -120,19 +120,18 @@
             <BreadcrumbNav PageName="FAQ" />
 
             <h1 class="fw-bold mb-3">Frequently Asked Questions</h1>
-            <p class="lead">Everything you need to know about the Meducate medical data API.</p>
+            <p class="lead">Common questions about Meducate API.</p>
 
             <hr>
 
             <h2 class="fw-semibold mt-4">What is Meducate API?</h2>
-            <p>Meducate API is a medical data REST API that provides structured, ICD-10 classified health topic data for developers. It aggregates information from trusted sources — <strong>MedlinePlus</strong> and <strong>PubMed</strong> — processes it using large language models, and delivers it as consistent, developer-friendly JSON.</p>
-            <p>Whether you're building a health app, EHR integration, symptom checker, or medical reference tool, Meducate gives you clean, categorised medical data without the complexity of parsing raw source material yourself.</p>
+            <p>Meducate API is a medical data REST API that provides structured, categorised health topic data for developers. It aggregates information from <strong>MedlinePlus</strong> and <strong>PubMed</strong>, processes it using large language models, and delivers it as consistent, developer-friendly JSON.</p>
 
             <hr>
 
-            <h2 class="fw-semibold">What is ICD-10 and how does the API use it?</h2>
-            <p>ICD-10 (International Classification of Diseases, 10th Revision) is the global standard system for classifying medical conditions and diseases, maintained by the World Health Organization. It's used by hospitals, insurers, EHR systems, and healthcare regulators worldwide.</p>
-            <p>Meducate uses ICD-10 chapter categories to automatically classify every health topic. This means you can filter and group data by body system (Respiratory, Circulatory, Digestive) or condition category (Infectious & Parasitic, Neoplasms, Mental & Behavioral) in a way that integrates naturally with existing healthcare infrastructure.</p>
+            <h2 class="fw-semibold">How are topics categorised?</h2>
+            <p>Meducate assigns every health topic to one of 24 categories. These are grouped by body system (Respiratory, Circulatory, Digestive), condition category (Infectious & Parasitic, Neoplasms, Mental & Behavioral), and content type (Drugs & Medications, Diagnostic & Laboratory, Health & Wellness), so you can filter and group data by medical area.</p>
+            <p>These categories organise general health education content. They are not clinical diagnosis codes and are not intended for medical coding or billing.</p>
 
             <hr>
 
@@ -162,7 +161,7 @@
             <p>All API responses are JSON. Each health topic includes:</p>
             <ul>
                 <li>Topic name and description</li>
-                <li>ICD-10 category (e.g. Respiratory System, Mental & Behavioral)</li>
+                <li>Category (e.g. Respiratory System, Mental & Behavioral)</li>
                 <li>Topic type (Disease, Drug, Procedure, Symptom, etc.)</li>
                 <li>Structured summary synthesised from multiple sources</li>
             </ul>
@@ -190,7 +189,7 @@
             <ul>
                 <li>Search health topics by keyword</li>
                 <li>Retrieve a specific topic by name</li>
-                <li>Filter topics by ICD-10 category or topic type</li>
+                <li>Filter topics by category or topic type</li>
             </ul>
             <p>See the <a href="/docs">full endpoint reference</a> for request parameters, response schemas, and interactive examples.</p>
 

@@ -1,3 +1,4 @@
+using Meducate.Infrastructure.Auth;
 using System.Security.Claims;
 using Meducate.Application.DTOs;
 using Meducate.Domain.Entities;
@@ -25,7 +26,7 @@ internal static class AuthEndpoints
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .WithTags("Auth");
 
-        app.MapPost("/api/users/register", [AllowAnonymous] async (RegisterRequest request, IUserRepository users, IEmailService emailSvc, IVerificationLinkBuilder linkBuilder, ILogger<Program> logger, CancellationToken ct) =>
+        app.MapPost("/api/users/register", [AllowAnonymous] async (RegisterRequest request, IUserRepository users, IEmailService emailSvc, VerificationLinkBuilder linkBuilder, ILogger<Program> logger, CancellationToken ct) =>
         {
             // Honeypot: reject if hidden field was filled (bots fill all fields)
             if (!string.IsNullOrEmpty(request.Website))
@@ -119,7 +120,7 @@ internal static class AuthEndpoints
         .ProducesProblem(StatusCodes.Status502BadGateway)
         .WithTags("Auth");
 
-        app.MapPost("/api/users/verify", [AllowAnonymous] async (VerifyUserRequest request, IUserRepository users, IEmailService emailSvc, IVerificationLinkBuilder urlBuilder, HttpContext http, CancellationToken ct) =>
+        app.MapPost("/api/users/verify", [AllowAnonymous] async (VerifyUserRequest request, IUserRepository users, IEmailService emailSvc, VerificationLinkBuilder urlBuilder, HttpContext http, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(request.Token))
             {

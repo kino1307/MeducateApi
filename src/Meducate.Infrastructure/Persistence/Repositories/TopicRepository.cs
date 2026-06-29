@@ -22,9 +22,9 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
     private void CacheSet<T>(string key, T value, TimeSpan? duration = null) =>
         cache.Set(key, value, CreateEntryOptions(duration ?? CacheDuration));
 
-    // Only expose topics that have been assigned a valid ICD-10 category.
+    // Only expose topics that have been assigned a category.
     // Topics pending or failing categorisation are not served via the API.
-    private static IQueryable<HealthTopic> ICD10ScopedQuery(DbSet<HealthTopic> set) =>
+    private static IQueryable<HealthTopic> CategorizedQuery(DbSet<HealthTopic> set) =>
         set.AsNoTracking().Where(c => c.Category != null);
 
     private static IQueryable<HealthTopic> ApplyTypeFilter(IQueryable<HealthTopic> query, string? topicType)
@@ -71,7 +71,7 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         if (cache.TryGetValue(cacheKey, out IEnumerable<TopicListItem>? cached) && cached is not null)
             return cached;
 
-        var query = ApplyTypeFilter(ICD10ScopedQuery(context.HealthTopics), topicType);
+        var query = ApplyTypeFilter(CategorizedQuery(context.HealthTopics), topicType);
 
         var results = await ProjectToListItem(
                 query.OrderBy(c => c.Name).Skip(skip).Take(take))
@@ -87,7 +87,7 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         if (cache.TryGetValue(cacheKey, out int cached))
             return cached;
 
-        var query = ApplyTypeFilter(ICD10ScopedQuery(context.HealthTopics), topicType);
+        var query = ApplyTypeFilter(CategorizedQuery(context.HealthTopics), topicType);
 
         var count = await query.CountAsync(ct);
         CacheSet(cacheKey, count);
@@ -102,7 +102,7 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         if (cache.TryGetValue(cacheKey, out object? cached))
             return ReferenceEquals(cached, NegativeCacheSentinel) ? null : cached as HealthTopic;
 
-        var result = await ICD10ScopedQuery(context.HealthTopics)
+        var result = await CategorizedQuery(context.HealthTopics)
             .FirstOrDefaultAsync(c => EF.Functions.ILike(c.Name, name), ct);
 
         // Cache hits for 10 min, misses for 2 min to avoid repeated DB lookups
@@ -126,7 +126,7 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         var escaped = EscapeLikeQuery(query);
 
         var dbQuery = ApplyTypeFilter(
-            ICD10ScopedQuery(context.HealthTopics)
+            CategorizedQuery(context.HealthTopics)
                 .Where(c => EF.Functions.ILike(c.Name, $"%{escaped}%", "\\")),
             topicType);
 
@@ -147,7 +147,7 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         var escaped = EscapeLikeQuery(query);
 
         var dbQuery = ApplyTypeFilter(
-            ICD10ScopedQuery(context.HealthTopics)
+            CategorizedQuery(context.HealthTopics)
                 .Where(c => EF.Functions.ILike(c.Name, $"%{escaped}%", "\\")),
             topicType);
 
@@ -161,7 +161,7 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         if (cache.TryGetValue(CacheKeys.Types, out IReadOnlyList<TopicTypeSummary>? cached) && cached is not null)
             return cached;
 
-        var types = (await ICD10ScopedQuery(context.HealthTopics)
+        var types = (await CategorizedQuery(context.HealthTopics)
             .Where(c => c.TopicType != null)
             .GroupBy(c => c.TopicType!)
             .Select(g => new { Type = g.Key, Count = g.Count() })

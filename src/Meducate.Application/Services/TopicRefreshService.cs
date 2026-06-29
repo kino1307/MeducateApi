@@ -357,14 +357,14 @@ internal sealed class TopicRefreshService(
             }
         }
 
-        // Phase 4 — Remove any topics still without a valid ICD-10 category after Phase 3
+        // Phase 4 — Remove any topics still without a valid category after Phase 3
         var stillUncategorized = await _queryRepo.GetTopicsNeedingCategoryAsync(_llmProcessor.GetValidCategories(), ct);
         var uncategorizedRemovedCount = 0;
         if (stillUncategorized.Count > 0)
         {
-            _logger.LogWarning("Removing {Count} topics with no ICD-10 category after refresh: {Names}",
+            _logger.LogWarning("Removing {Count} topics with no category after refresh: {Names}",
                 stillUncategorized.Count, string.Join(", ", stillUncategorized.Select(t => t.Name)));
-            console?.WriteLine($"Phase 4: Removing {stillUncategorized.Count} topics with no ICD-10 category.");
+            console?.WriteLine($"Phase 4: Removing {stillUncategorized.Count} topics with no category.");
             await _writeRepo.RemoveRangeAsync(stillUncategorized, ct);
             await _writeRepo.SaveChangesAsync(ct);
             uncategorizedRemovedCount = stillUncategorized.Count;

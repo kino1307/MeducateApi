@@ -43,7 +43,7 @@ internal static class ApiServiceRegistration
             {
                 Title = "Meducate API",
                 Version = "v1",
-                Description = "Medical education API providing structured, ICD-10 classified health topics refreshed daily from MedlinePlus and PubMed.",
+                Description = "Medical education API providing structured, categorised health topics refreshed daily from MedlinePlus and PubMed.",
                 Contact = new Microsoft.OpenApi.OpenApiContact
                 {
                     Name = "Meducate API",

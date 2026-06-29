@@ -49,7 +49,7 @@ internal static class InfrastructureServiceRegistration
             throw new InvalidOperationException("Resend API token is not configured. Set Resend:ApiToken in user secrets or appsettings.");
 
         services.AddScoped<IEmailService, EmailService>();
-        services.AddSingleton<IVerificationLinkBuilder, VerificationLinkBuilder>();
+        services.AddSingleton<VerificationLinkBuilder>();
         services.AddOptions();
         services.AddHttpClient<ResendClient>()
             .AddHttpMessageHandler(sp =>

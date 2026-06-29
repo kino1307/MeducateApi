@@ -109,6 +109,10 @@ app.Use(async (ctx, next) =>
 
 app.UseAntiforgery();
 
+// Permanent redirects for pages removed when ICD-10 branding was dropped
+app.MapGet("/icd-10-api", () => Results.Redirect("/health-topics-api", permanent: true));
+app.MapGet("/blog/how-to-integrate-icd-10-codes", () => Results.Redirect("/blog", permanent: true));
+
 app.MapGet("/auth/verify", async (string? token, IHttpClientFactory clientFactory, HttpContext http) =>
 {
     if (string.IsNullOrWhiteSpace(token))

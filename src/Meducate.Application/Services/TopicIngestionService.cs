@@ -370,14 +370,14 @@ internal sealed class TopicIngestionService(
         // 12. Backfill categories for topics missing them (including ones just cleared above)
         var categorizedCount = await _backfillService.BackfillCategoriesAsync(ct, console);
 
-        // 13. Remove any topics that still have no ICD-10 category — only categorised topics are served
+        // 13. Remove any topics that still have no category — only categorised topics are served
         var uncategorized = await _queryRepo.GetUncategorizedTopicsAsync(ct);
         var uncategorizedRemovedCount = 0;
         if (uncategorized.Count > 0)
         {
-            _logger.LogWarning("Removing {Count} topics that could not be assigned an ICD-10 category: {Names}",
+            _logger.LogWarning("Removing {Count} topics that could not be assigned a category: {Names}",
                 uncategorized.Count, string.Join(", ", uncategorized.Select(t => t.Name)));
-            console?.WriteLine($"Removing {uncategorized.Count} topics with no ICD-10 category: {string.Join(", ", uncategorized.Select(t => t.Name))}");
+            console?.WriteLine($"Removing {uncategorized.Count} topics with no category: {string.Join(", ", uncategorized.Select(t => t.Name))}");
             await _writeRepo.RemoveRangeAsync(uncategorized, ct);
             await _writeRepo.SaveChangesAsync(ct);
             uncategorizedRemovedCount = uncategorized.Count;

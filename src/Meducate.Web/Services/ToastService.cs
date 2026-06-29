@@ -4,7 +4,6 @@ public enum ToastType
 {
     Success,
     Error,
-    Warning,
     Info
 }
 
@@ -46,7 +45,6 @@ public class ToastService
 
     public void Success(string message) => Show(message, ToastType.Success);
     public void Error(string message) => Show(message, ToastType.Error);
-    public void Warning(string message) => Show(message, ToastType.Warning);
     public void Info(string message) => Show(message, ToastType.Info);
 
     public void Dismiss(Guid id)

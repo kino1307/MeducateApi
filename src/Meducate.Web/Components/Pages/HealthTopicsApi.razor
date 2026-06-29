@@ -1,7 +1,7 @@
 @page "/health-topics-api"
 
-<SeoHead Title="Health Topics API | Structured Medical Data — Meducate API"
-         Description="Retrieve structured health topic data via API. Covers symptoms, treatments, and conditions — ICD-10 classified and daily-refreshed."
+<SeoHead Title="Health Topics API | Structured Medical Data | Meducate API"
+         Description="Retrieve structured health topic data via API. Covers symptoms, treatments, and conditions. Categorised and daily-refreshed."
          Canonical="https://meducateapi.com/health-topics-api">
     <script type="application/ld+json">
     {
@@ -32,39 +32,39 @@
             <BreadcrumbNav PageName="Health Topics API" />
 
             <h1 class="fw-bold mb-3">Health Topics API</h1>
-            <p class="lead">Query structured health topics through a simple REST API. Every topic is ICD-10 classified, typed, and sourced from authoritative medical references.</p>
+            <p class="lead">Query structured health topics through a simple REST API. Every topic is categorised, typed, and sourced from authoritative medical references.</p>
 
             <a href="/register" class="btn btn-primary mt-2 mb-4">Get a free API key</a>
 
             <hr>
 
-            <h2 class="fw-semibold">What Health Topic Data Is Available?</h2>
+            <h2 class="fw-semibold">What health topic data is available?</h2>
             <p>The Meducate health topics API provides access to a structured dataset of medical conditions sourced from the MedlinePlus health topic library. The dataset covers diseases, disorders, syndromes, symptoms, and mental health topics spanning every major area of medicine.</p>
             <p>Each health topic in the API includes:</p>
             <ul>
-                <li><strong>Name</strong> — the canonical topic name</li>
-                <li><strong>Description</strong> — a structured summary synthesised from authoritative sources</li>
-                <li><strong>Type</strong> — classification of the topic kind: Disease, Disorder, Syndrome, Symptom, or Mental Health</li>
-                <li><strong>ICD-10 category</strong> — the ICD-10 chapter the topic belongs to (e.g. Respiratory System, Mental & Behavioral, Circulatory System)</li>
+                <li><strong>Name:</strong> the canonical topic name</li>
+                <li><strong>Description:</strong> a structured summary synthesised from authoritative sources</li>
+                <li><strong>Type:</strong> classification of the topic kind: Disease, Disorder, Syndrome, Symptom, or Mental Health</li>
+                <li><strong>Category:</strong> the body-system or content-type category the topic belongs to (e.g. Respiratory System, Mental & Behavioral, Circulatory System)</li>
             </ul>
 
             <hr>
 
-            <h2 class="fw-semibold">Topic Types Covered</h2>
+            <h2 class="fw-semibold">Topic types covered</h2>
 
-            <h3 class="fw-semibold mt-3">Diseases, Disorders & Syndromes</h3>
-            <p>The largest group. Covers chronic conditions (diabetes, hypertension, asthma), acute diseases (pneumonia, appendicitis), infectious diseases (influenza, HIV), functional disorders, named syndromes, and rare conditions. Each is classified by ICD-10 body system or condition category.</p>
+            <h3 class="fw-semibold mt-3">Diseases, disorders, and syndromes</h3>
+            <p>The largest group. Covers chronic conditions (diabetes, hypertension, asthma), acute diseases (pneumonia, appendicitis), infectious diseases (influenza, HIV), functional disorders, named syndromes, and rare conditions. Each is classified by body system or condition category.</p>
 
-            <h3 class="fw-semibold mt-3">Mental Health</h3>
-            <p>Mental health conditions including anxiety, depression, PTSD, and other psychological and behavioural disorders. Classified under the Mental & Behavioral ICD-10 category.</p>
+            <h3 class="fw-semibold mt-3">Mental health</h3>
+            <p>Mental health conditions including anxiety, depression, PTSD, and other psychological and behavioural disorders. Classified under the Mental & Behavioral category.</p>
 
             <h3 class="fw-semibold mt-3">Symptoms</h3>
             <p>Common patient-reported symptoms classified by body system. Useful as input for symptom checker logic or triage flow classification.</p>
 
             <hr>
 
-            <h2 class="fw-semibold">ICD-10 Category Coverage</h2>
-            <p>Every topic is assigned to one of 24 ICD-10 aligned categories:</p>
+            <h2 class="fw-semibold">Category coverage</h2>
+            <p>Every topic is assigned to one of 24 categories:</p>
             <div class="row mt-3">
                 <div class="col-md-6">
                     <ul>
@@ -102,7 +102,7 @@
 
             <hr>
 
-            <h2 class="fw-semibold">Querying Health Topics</h2>
+            <h2 class="fw-semibold">Querying health topics</h2>
             <p>The health topics API supports searching by keyword and filtering by category or type. A simple search looks like this:</p>
 
             <pre class="bg-light p-3 rounded"><code>curl -H "X-Api-Key: YOUR_API_KEY" \
@@ -117,11 +117,11 @@
 
             <hr>
 
-            <h2 class="fw-semibold">Data Sources</h2>
+            <h2 class="fw-semibold">Data sources</h2>
             <p>Health topic data is sourced from:</p>
             <ul>
-                <li><strong>MedlinePlus</strong> — U.S. National Library of Medicine, the primary source for topic discovery. Medical conditions sourced from MedlinePlus are discovered automatically and retired when removed from MedlinePlus.</li>
-                <li><strong>PubMed</strong> — peer-reviewed biomedical literature from the NLM. Used to enrich topics with additional research context.</li>
+                <li><strong>MedlinePlus:</strong> U.S. National Library of Medicine, the primary source for topic discovery. Medical conditions sourced from MedlinePlus are discovered automatically and retired when removed from MedlinePlus.</li>
+                <li><strong>PubMed:</strong> peer-reviewed biomedical literature from the NLM. Used to enrich topics with additional research context.</li>
             </ul>
 
             <hr>
@@ -130,7 +130,7 @@
                 <a href="/register" class="btn btn-primary me-2">Get a free API key</a>
                 <a href="/docs" class="btn btn-outline-secondary">View documentation</a>
             </p>
-            <p class="text-muted mt-3">Also see: <a href="/icd-10-api">ICD-10 API</a> · <a href="/medical-data-api">Medical Data API</a> · <a href="/use-cases">Use Cases</a></p>
+            <p class="text-muted mt-3">Also see: <a href="/medical-data-api">Medical Data API</a> · <a href="/use-cases">Use Cases</a></p>
 
         </div>
     </div>

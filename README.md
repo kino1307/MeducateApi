@@ -13,7 +13,7 @@
 
 ## What It Does
 
-MeducateAPI automatically discovers and aggregates medical topics from authoritative sources like MedlinePlus and PubMed, then uses LLM processing to extract structured data — summaries, symptoms, risk factors, and treatments — all classified under ICD-10 medical categories. The result is a clean REST API that developers can use to build health education tools without wrangling raw medical data themselves.
+MeducateAPI automatically discovers and aggregates medical topics from authoritative sources like MedlinePlus and PubMed, then uses LLM processing to extract structured data — summaries, symptoms, risk factors, and treatments — all classified into body-system and content-type categories. The result is a clean REST API that developers can use to build health education tools without wrangling raw medical data themselves.
 
 ## Live
 
@@ -27,7 +27,7 @@ MeducateAPI automatically discovers and aggregates medical topics from authorita
 - **Rate limiting** — two-tier system: 60 req/min per key + configurable daily limits with 80% usage alerts
 - **Automated topic discovery** — daily Hangfire jobs fetch new topics from MedlinePlus at 2 AM UTC
 - **Automated topic refresh** — existing topics re-processed daily at 3 AM UTC for accuracy
-- **ICD-10 classification** — LLM-powered categorisation into 24 standardised medical categories
+- **Topic classification** — LLM-powered categorisation into 24 standardised medical categories
 - **Interactive Swagger docs** — full OpenAPI spec with try-it-out support
 - **Usage dashboard** — Blazor Server UI for managing keys, viewing usage, and browsing docs
 
@@ -103,7 +103,7 @@ graph LR
     MLP[MedlinePlus] --> DJ
     PM[PubMed] --> DJ
     DJ[TopicDiscoveryJob<br/><i>Daily · 2 AM UTC</i>] --> CL
-    CL[LLM Classification<br/><i>Topic type · ICD-10</i>] --> EX
+    CL[LLM Classification<br/><i>Topic type · Category</i>] --> EX
     EX[LLM Extraction<br/><i>Summary · Symptoms<br/>Factors · Treatments</i>] --> QC
     QC[Quality Control<br/><i>Synonym merging<br/>Field validation</i>] --> PG
     PG[(PostgreSQL)] --> API

@@ -3,7 +3,7 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<SeoHead Title="API Documentation — Meducate API"
+<SeoHead Title="API Documentation | Meducate API"
          Description="Full API reference and integration guide for Meducate API. Start querying medical data in minutes."
          Canonical="https://meducateapi.com/docs">
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.31.2/swagger-ui.css" integrity="sha384-KX9Rx9vM1AmUNAn07bPAiZhFD4C8jdNgG6f5MRNvR+EfAxs2PmMFtUUazui7ryZQ" crossorigin="anonymous" />
@@ -14,7 +14,7 @@
         "name": "Meducate API",
         "url": "https://api.meducateapi.com",
         "documentation": "https://meducateapi.com/docs",
-        "description": "REST API providing structured, ICD-10 classified medical data refreshed daily from MedlinePlus and PubMed.",
+        "description": "REST API providing structured, categorised medical data refreshed daily from MedlinePlus and PubMed.",
         "provider": {
             "@@type": "Organization",
             "name": "Meducate API",
@@ -50,17 +50,17 @@
 
             <h1 class="fw-bold mb-3">Documentation</h1>
 
-            <p class="lead">Meducate API provides structured, consistent, and up-to-date educational medical information through a simple, developer-friendly API.</p>
+            <p class="lead">Meducate API provides structured, up-to-date medical information through a simple REST API.</p>
 
             <hr>
 
-            <h2 class="fw-semibold">What the Medical Data API Provides</h2>
+            <h2 class="fw-semibold">What the API provides</h2>
 
-            <p>Meducate aggregates medical reference data from external providers and processes it using large language models (LLMs). This data is normalised and structured into predictable formats with <strong>ICD-10 standardized categorization</strong> that can be reliably consumed by applications.</p>
+            <p>Meducate aggregates medical reference data from external providers and processes it using large language models (LLMs). This data is normalised and structured into predictable formats with <strong>body-system and content-type categories</strong>.</p>
 
-            <p>All health topics are classified by type (Disease, Drug, Procedure, etc.) and assigned to standardized medical categories based on ICD-10 chapters—such as Respiratory System, Circulatory System, Mental & Behavioral, and more—ensuring consistent, industry-standard medical classification across all data.</p>
+            <p>All health topics are classified by type (Disease, Drug, Procedure, etc.) and assigned to categories grouped by body system, such as Respiratory System, Circulatory System, and Mental & Behavioral.</p>
 
-            <p>To ensure information remains current, all source data is reprocessed and summarised <strong>daily</strong> using automated background jobs.</p>
+            <p>Source data is reprocessed and summarised <strong>daily</strong> by automated background jobs.</p>
 
             <hr>
 
@@ -73,7 +73,7 @@
 
             <hr>
 
-            <h2 class="fw-semibold">Quick Start: Query ICD-10 Health Topics</h2>
+            <h2 class="fw-semibold">Quick start: query health topics</h2>
 
             <p>Search for health topics using your API key. Replace <code>YOUR_API_KEY</code> with your key or use the <a href="#demo-key" data-enhance-nav="false">demo key</a> below.</p>
 
@@ -116,7 +116,7 @@ print(response.json())</code></pre>
 
             <hr>
 
-            <h2 class="fw-semibold">API Rate Limits & Daily Usage</h2>
+            <h2 class="fw-semibold">Rate limits and daily usage</h2>
 
             <ul class="mt-3">
                 <li><strong>1,000 requests per day</strong> per API key</li>
@@ -145,7 +145,7 @@ print(response.json())</code></pre>
                         <input type="text" class="form-control font-monospace" value="@DemoKey" readonly />
                         <button class="btn btn-outline-primary" @onclick="CopyDemoKey">@_copyLabel</button>
                     </div>
-                    <small class="text-muted mt-2 d-block">Shared demo key &mdash; 50 requests/day. <a href="/register">Create a free account</a> for 1,000/day.</small>
+                    <small class="text-muted mt-2 d-block">Shared demo key. 50 requests/day. <a href="/register">Create a free account</a> for 1,000/day.</small>
                 </div>
             </div>
 

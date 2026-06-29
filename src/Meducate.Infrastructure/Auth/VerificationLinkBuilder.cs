@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Meducate.Infrastructure.Auth;
 
-internal sealed class VerificationLinkBuilder(IConfiguration config) : IVerificationLinkBuilder
+internal sealed class VerificationLinkBuilder(IConfiguration config)
 {
     private readonly string _baseUrl =
         (config["App:BaseUrl"] ?? throw new InvalidOperationException("App:BaseUrl not configured."))

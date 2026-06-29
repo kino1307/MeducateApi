@@ -12,7 +12,7 @@ internal static class ProblemResponse
         context.Response.ContentType = "application/problem+json";
         var traceId = context.Items.TryGetValue("CorrelationId", out var cid) ? cid as string : null;
         var body = new { type = "https://tools.ietf.org/html/rfc7231", title = ReasonPhrase(statusCode), status = statusCode, detail, traceId };
-        await context.Response.WriteAsync(JsonSerializer.Serialize(body, JsonDefaults.CamelCase));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(body));
     }
 
     private static string ReasonPhrase(int statusCode) => statusCode switch

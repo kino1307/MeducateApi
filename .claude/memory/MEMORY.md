@@ -3,7 +3,7 @@
 # MeducateAPI Project Memory
 
 ## Project Overview
-Medical education REST API platform. Transforms raw health data (MedlinePlus, PubMed) into structured, ICD-10 classified topics using GPT-4 via Semantic Kernel. Daily automated refresh via Hangfire jobs.
+Medical education REST API platform. Transforms raw health data (MedlinePlus, PubMed) into structured topics, categorised into 24 body-system/content-type categories, using GPT-4 via Semantic Kernel. Daily automated refresh via Hangfire jobs.
 
 - **Domain**: meducateapi.com (API: api.meducateapi.com)
 - **Hosting**: Railway (hobby tier), Cloudflare CDN/DNS

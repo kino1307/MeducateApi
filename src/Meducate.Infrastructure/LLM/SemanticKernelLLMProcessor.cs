@@ -286,7 +286,7 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
             with their names, types, and summaries. Classify each topic into exactly ONE
             standardized medical category from the list below.
 
-            These categories are based on ICD-10 chapters and medical ontology standards.
+            These categories group topics by body system and content type.
             Your classification should be consistent and follow industry guidelines.
 
             STANDARD MEDICAL CATEGORIES (return EXACTLY as shown):
