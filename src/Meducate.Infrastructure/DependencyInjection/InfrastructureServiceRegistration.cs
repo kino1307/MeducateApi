@@ -89,11 +89,17 @@ internal static class InfrastructureServiceRegistration
         var icd11ClientSecret = config["Icd11:ClientSecret"];
         if (!string.IsNullOrWhiteSpace(icd11ClientId) && !string.IsNullOrWhiteSpace(icd11ClientSecret))
         {
+            // The no-op fallback below logs nothing on lookup, which makes a misconfigured
+            // env var indistinguishable from a real API failure when read remotely — so log
+            // which branch fired, once, at startup, straight to stdout (visible in Railway logs
+            // immediately on deploy, no job run required).
+            Console.WriteLine("ICD-11: WHO API credentials found — using live coding service.");
             services.AddHttpClient<Icd11ApiClient>(client => client.Timeout = TimeSpan.FromSeconds(30));
             services.AddScoped<IIcd11CodingService>(sp => sp.GetRequiredService<Icd11ApiClient>());
         }
         else
         {
+            Console.WriteLine("ICD-11: no WHO API credentials configured — using no-op fallback.");
             services.AddScoped<IIcd11CodingService, NullIcd11CodingService>();
         }
 
