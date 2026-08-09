@@ -30,6 +30,10 @@ internal sealed class HealthTopic
 
     public string? TopicType { get; set; }
 
+    public string? Icd11Code { get; set; }
+
+    public string? Icd11Title { get; set; }
+
     public List<string>? Tags { get; set; }
 
     public int Version { get; set; } = 1;

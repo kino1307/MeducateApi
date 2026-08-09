@@ -22,6 +22,7 @@ public sealed record TopicListItem(
     string? Summary,
     string? TopicType,
     string? Category,
+    string? Icd11Code,
     DateTime LastUpdated);
 
 internal sealed record TopicTypeSummary(string Type, int Count)

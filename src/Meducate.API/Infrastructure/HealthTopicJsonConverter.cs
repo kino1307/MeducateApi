@@ -39,6 +39,8 @@ internal sealed class HealthTopicJsonConverter : JsonConverter<HealthTopic>
             Citations = ReadStringList(root, "citations"),
             Category = root.TryGetProperty("category", out var cat) ? cat.GetString() : null,
             TopicType = root.TryGetProperty("topicType", out var tt) ? tt.GetString() : null,
+            Icd11Code = root.TryGetProperty("icd11Code", out var icdCode) ? icdCode.GetString() : null,
+            Icd11Title = root.TryGetProperty("icd11Title", out var icdTitle) ? icdTitle.GetString() : null,
             Tags = ReadStringList(root, "tags"),
             Version = root.TryGetProperty("version", out var ver) ? ver.GetInt32() : 1,
             LastUpdated = root.TryGetProperty("lastUpdated", out var lu) ? lu.GetDateTime() : DateTime.UtcNow,
@@ -57,6 +59,8 @@ internal sealed class HealthTopicJsonConverter : JsonConverter<HealthTopic>
         WriteNullableString(writer, "summary", value.Summary);
         WriteNullableString(writer, "topicType", value.TopicType);
         WriteNullableString(writer, "category", value.Category);
+        WriteNullableString(writer, "icd11Code", value.Icd11Code);
+        WriteNullableString(writer, "icd11Title", value.Icd11Title);
 
         WriteStringList(writer, observationsKey, value.Observations);
         WriteStringList(writer, factorsKey, value.Factors);

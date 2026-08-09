@@ -373,22 +373,25 @@ internal sealed class TopicRefreshService(
         // Phase 5 — Flag any topics with empty structured fields for next reprocessing cycle
         var emptyFieldsCount = await _backfillService.BackfillEmptyStructuredFieldsAsync(ct, console);
 
-        if (reprocessedCount > 0 || categorizedCount > 0 || emptyFieldsCount > 0 || uncategorizedRemovedCount > 0)
+        // Phase 6 — Look up ICD-11 codes for newly-categorized diagnosable topics
+        var icd11Count = await _backfillService.BackfillIcd11CodesAsync(ct, console);
+
+        if (reprocessedCount > 0 || categorizedCount > 0 || emptyFieldsCount > 0 || uncategorizedRemovedCount > 0 || icd11Count > 0)
         {
             _topicRepo.InvalidateCache();
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Cache invalidated after reprocessing {Reprocessed}, categorizing {Categorized}, removing uncategorized {Uncategorized}, flagging {EmptyFields} empty-field topics",
-                    reprocessedCount, categorizedCount, uncategorizedRemovedCount, emptyFieldsCount);
+                _logger.LogInformation("Cache invalidated after reprocessing {Reprocessed}, categorizing {Categorized}, removing uncategorized {Uncategorized}, flagging {EmptyFields} empty-field topics, ICD-11 coding {Icd11}",
+                    reprocessedCount, categorizedCount, uncategorizedRemovedCount, emptyFieldsCount, icd11Count);
             }
         }
 
         if (_logger.IsEnabled(LogLevel.Information))
         {
-            _logger.LogInformation("Topic refresh complete — refreshed {Refreshed}, reprocessed {Reprocessed}, categorized {Categorized}, removed uncategorized {Uncategorized}, flagged {EmptyFields} empty-field topics",
-                toRefresh.Count, reprocessedCount, categorizedCount, uncategorizedRemovedCount, emptyFieldsCount);
+            _logger.LogInformation("Topic refresh complete — refreshed {Refreshed}, reprocessed {Reprocessed}, categorized {Categorized}, removed uncategorized {Uncategorized}, flagged {EmptyFields} empty-field topics, ICD-11 coded {Icd11}",
+                toRefresh.Count, reprocessedCount, categorizedCount, uncategorizedRemovedCount, emptyFieldsCount, icd11Count);
         }
-        console?.WriteLine($"Done — {refreshed} refreshed, {reprocessedCount} reprocessed, {categorizedCount} categorized, {uncategorizedRemovedCount} removed (no category), {emptyFieldsCount} flagged for empty fields.");
+        console?.WriteLine($"Done — {refreshed} refreshed, {reprocessedCount} reprocessed, {categorizedCount} categorized, {uncategorizedRemovedCount} removed (no category), {emptyFieldsCount} flagged for empty fields, {icd11Count} ICD-11 coded.");
     }
 
     private async Task<List<RawTopicData>> FetchAllProvidersAsync(HealthTopic topic, CancellationToken ct)

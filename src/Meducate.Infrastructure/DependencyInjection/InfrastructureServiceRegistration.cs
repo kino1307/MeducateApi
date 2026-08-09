@@ -9,6 +9,7 @@ using Meducate.Infrastructure.ApiKeys;
 using Meducate.Infrastructure.Auth;
 using Meducate.Infrastructure.DataProviders;
 using Meducate.Infrastructure.Email;
+using Meducate.Infrastructure.Icd11;
 using Meducate.Infrastructure.LLM;
 using Meducate.Infrastructure.Persistence;
 using Meducate.Infrastructure.Persistence.Repositories;
@@ -81,6 +82,20 @@ internal static class InfrastructureServiceRegistration
         });
         services.AddScoped<IMedicalDataProvider>(sp => sp.GetRequiredService<MedlinePlusDataProvider>());
         services.AddScoped<IMedicalDataProvider>(sp => sp.GetRequiredService<PubMedDataProvider>());
+
+        // ICD-11 coding — optional. Without WHO credentials, fall back to a no-op so
+        // local dev/CI/integration tests keep working without registering for an API key.
+        var icd11ClientId = config["Icd11:ClientId"];
+        var icd11ClientSecret = config["Icd11:ClientSecret"];
+        if (!string.IsNullOrWhiteSpace(icd11ClientId) && !string.IsNullOrWhiteSpace(icd11ClientSecret))
+        {
+            services.AddHttpClient<Icd11ApiClient>(client => client.Timeout = TimeSpan.FromSeconds(30));
+            services.AddScoped<IIcd11CodingService>(sp => sp.GetRequiredService<Icd11ApiClient>());
+        }
+        else
+        {
+            services.AddScoped<IIcd11CodingService, NullIcd11CodingService>();
+        }
 
         // Application services
         services.AddScoped<TopicBackfillService>();

@@ -13,9 +13,10 @@ public class TopicRefreshServiceTests
         FakeQueryRepo queryRepo,
         FakeWriteRepo writeRepo,
         FakeLlmProcessor llmProcessor,
-        FakeTopicRepo? topicRepo = null)
+        FakeTopicRepo? topicRepo = null,
+        FakeIcd11CodingService? icd11Service = null)
     {
-        var backfill = new TopicBackfillService(queryRepo, writeRepo, llmProcessor, NullLogger<TopicBackfillService>.Instance);
+        var backfill = new TopicBackfillService(queryRepo, writeRepo, llmProcessor, icd11Service ?? new FakeIcd11CodingService(), NullLogger<TopicBackfillService>.Instance);
         return new TopicRefreshService(providers, queryRepo, writeRepo, llmProcessor, topicRepo ?? new FakeTopicRepo(), backfill, NullLogger<TopicRefreshService>.Instance);
     }
 
@@ -202,6 +203,39 @@ public class TopicRefreshServiceTests
         Assert.Equal("old-hash", topic.SourceHash);
     }
 
+    [Fact]
+    public async Task RefreshAllAsync_AssignsIcd11Code_ForMatchedDiagnosableTopic()
+    {
+        var topic = new HealthTopic { Name = "Asthma", TopicType = "Disease", Category = "Respiratory System" };
+        var queryRepo = new FakeQueryRepo { NeedingIcd11 = [topic] };
+        var writeRepo = new FakeWriteRepo();
+        var llm = new FakeLlmProcessor();
+        var icd11 = new FakeIcd11CodingService();
+        icd11.Matches["Asthma"] = new Icd11Match("CA23", "Asthma");
+        var service = BuildService([], queryRepo, writeRepo, llm, icd11Service: icd11);
+
+        await service.RefreshAllAsync();
+
+        Assert.Equal("CA23", topic.Icd11Code);
+        Assert.Equal("Asthma", topic.Icd11Title);
+    }
+
+    [Fact]
+    public async Task RefreshAllAsync_LeavesIcd11CodeNull_WhenNoConfidentMatch()
+    {
+        var topic = new HealthTopic { Name = "Made Up Condition", TopicType = "Disease", Category = "Symptoms & Signs" };
+        var queryRepo = new FakeQueryRepo { NeedingIcd11 = [topic] };
+        var writeRepo = new FakeWriteRepo();
+        var llm = new FakeLlmProcessor();
+        var icd11 = new FakeIcd11CodingService();
+        var service = BuildService([], queryRepo, writeRepo, llm, icd11Service: icd11);
+
+        await service.RefreshAllAsync();
+
+        Assert.Null(topic.Icd11Code);
+        Assert.Contains("Made Up Condition", icd11.LookedUpNames);
+    }
+
     private sealed class FakeProvider(string sourceName, Func<string, RawTopicData?> fetch) : IMedicalDataProvider
     {
         public string SourceName => sourceName;
@@ -261,12 +295,14 @@ public class TopicRefreshServiceTests
     {
         public List<HealthTopic> NeedingRefresh { get; init; } = [];
         public List<HealthTopic> AllTopics { get; init; } = [];
+        public List<HealthTopic> NeedingIcd11 { get; init; } = [];
 
         public Task<List<HealthTopic>> GetTopicsNeedingRefreshAsync(DateTime cutoff, CancellationToken ct) => Task.FromResult(NeedingRefresh);
         public Task<List<HealthTopic>> GetTopicsNeedingReprocessingAsync(CancellationToken ct) =>
             Task.FromResult(AllTopics.Where(t => t.NeedsLlmReprocessing).ToList());
         public Task<List<HealthTopic>> GetTopicsNeedingCategoryAsync(IReadOnlyCollection<string> validCategories, CancellationToken ct) =>
             Task.FromResult(AllTopics.Where(t => t.Category is null || !validCategories.Contains(t.Category)).ToList());
+        public Task<List<HealthTopic>> GetTopicsNeedingIcd11Async(IReadOnlyCollection<string> codeableTypes, CancellationToken ct) => Task.FromResult(NeedingIcd11);
         public Task<List<HealthTopic>> GetTopicsWithEmptyStructuredFieldsAsync(CancellationToken ct) => Task.FromResult(new List<HealthTopic>());
 
         public Task<List<string>> GetAllTopicNamesAsync(CancellationToken ct) => throw new NotImplementedException();
@@ -325,5 +361,17 @@ public class TopicRefreshServiceTests
         public Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<int> SearchCountAsync(string query, string? topicType = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<TopicTypeSummary>> GetDistinctTypesAsync(CancellationToken ct = default) => throw new NotImplementedException();
+    }
+
+    private sealed class FakeIcd11CodingService : IIcd11CodingService
+    {
+        public Dictionary<string, Icd11Match> Matches { get; } = new();
+        public List<string> LookedUpNames { get; } = new();
+
+        public Task<Icd11Match?> LookupAsync(string topicName, CancellationToken ct = default)
+        {
+            LookedUpNames.Add(topicName);
+            return Task.FromResult(Matches.TryGetValue(topicName, out var match) ? match : null);
+        }
     }
 }

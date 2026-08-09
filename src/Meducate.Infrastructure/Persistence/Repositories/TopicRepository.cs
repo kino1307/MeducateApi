@@ -42,6 +42,7 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
             c.Summary,
             c.TopicType,
             c.Category,
+            c.Icd11Code,
             c.LastUpdated));
     }
 

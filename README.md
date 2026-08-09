@@ -28,6 +28,7 @@ MeducateAPI automatically discovers and aggregates medical topics from authorita
 - **Automated topic discovery** — daily Hangfire jobs fetch new topics from MedlinePlus at 2 AM UTC
 - **Automated topic refresh** — existing topics re-processed daily at 3 AM UTC for accuracy
 - **Topic classification** — LLM-powered categorisation into 24 standardised medical categories
+- **ICD-11 coding** — diagnosable topics (Disease, Disorder, Syndrome, Symptom, Mental Health) are matched against the WHO ICD-11 API for a real, verifiable diagnostic code — not LLM-generated
 - **Interactive Swagger docs** — full OpenAPI spec with try-it-out support
 - **Usage dashboard** — Blazor Server UI for managing keys, viewing usage, and browsing docs
 
@@ -158,6 +159,8 @@ graph LR
   "summary": "A chronic metabolic disorder in which the body becomes resistant to insulin or doesn't produce enough, leading to elevated blood glucose levels.",
   "topicType": "Disease",
   "category": "Endocrine, Nutritional & Metabolic",
+  "icd11Code": "5A11",
+  "icd11Title": "Type 2 diabetes mellitus",
   "symptoms": [
     "Increased Thirst And Frequent Urination",
     "Unexplained Weight Loss",

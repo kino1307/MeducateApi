@@ -11,11 +11,13 @@ internal sealed class TopicBackfillService(
     ITopicQueryRepository queryRepo,
     ITopicWriteRepository writeRepo,
     ILLMProcessor llmProcessor,
+    IIcd11CodingService icd11Service,
     ILogger<TopicBackfillService> logger)
 {
     private readonly ITopicQueryRepository _queryRepo = queryRepo;
     private readonly ITopicWriteRepository _writeRepo = writeRepo;
     private readonly ILLMProcessor _llmProcessor = llmProcessor;
+    private readonly IIcd11CodingService _icd11Service = icd11Service;
     private readonly ILogger<TopicBackfillService> _logger = logger;
 
     internal async Task<int> BackfillTopicTypesAsync(CancellationToken ct, PerformContext? console = null)
@@ -316,6 +318,57 @@ internal sealed class TopicBackfillService(
             console?.WriteLine($"Category backfill failed: {ex.Message}");
 
             _writeRepo.RevertChanges(uncategorized);
+
+            return 0;
+        }
+    }
+
+    internal async Task<int> BackfillIcd11CodesAsync(CancellationToken ct, PerformContext? console = null)
+    {
+        var topics = await _queryRepo.GetTopicsNeedingIcd11Async(TopicConstants.Icd11CodeableTypes, ct);
+
+        if (topics.Count == 0)
+            return 0;
+
+        if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Looking up ICD-11 codes for {Count} topics", topics.Count);
+
+        console?.WriteLine($"Looking up ICD-11 codes for {topics.Count} topics...");
+
+        var matched = 0;
+        foreach (var topic in topics)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var match = await _icd11Service.LookupAsync(topic.Name, ct);
+            if (match is null)
+                continue;
+
+            topic.Icd11Code = match.Code;
+            topic.Icd11Title = match.Title;
+            matched++;
+        }
+
+        if (matched == 0)
+            return 0;
+
+        try
+        {
+            await _writeRepo.SaveChangesAsync(ct);
+
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Assigned ICD-11 codes to {Count} topics", matched);
+
+            console?.WriteLine($"Assigned ICD-11 codes to {matched} topics.");
+
+            return matched;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to save ICD-11 codes — will retry next run");
+            console?.WriteLine($"ICD-11 backfill save failed: {ex.Message}");
+
+            _writeRepo.RevertChanges(topics);
 
             return 0;
         }

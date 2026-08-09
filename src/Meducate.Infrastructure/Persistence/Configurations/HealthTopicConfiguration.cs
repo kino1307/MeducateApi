@@ -13,6 +13,8 @@ internal sealed class HealthTopicConfiguration : IEntityTypeConfiguration<Health
         builder.Property(t => t.OriginalName).HasMaxLength(200);
         builder.Property(t => t.Category).HasMaxLength(100);
         builder.Property(t => t.TopicType).HasMaxLength(50);
+        builder.Property(t => t.Icd11Code).HasMaxLength(20);
+        builder.Property(t => t.Icd11Title).HasMaxLength(300);
         builder.Property(t => t.Observations).HasColumnType("jsonb");
         builder.Property(t => t.Factors).HasColumnType("jsonb");
         builder.Property(t => t.Actions).HasColumnType("jsonb");

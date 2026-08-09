@@ -166,6 +166,7 @@ public class DataIntegrityCheckServiceTests
         public bool BatchRequested { get; private set; }
 
         public Task<List<HealthTopic>> GetTopicsNeedingCategoryAsync(IReadOnlyCollection<string> validCategories, CancellationToken ct) => Task.FromResult(NeedingCategory);
+        public Task<List<HealthTopic>> GetTopicsNeedingIcd11Async(IReadOnlyCollection<string> codeableTypes, CancellationToken ct) => Task.FromResult(new List<HealthTopic>());
         public Task<int> GetServedTopicCountAsync(CancellationToken ct) => Task.FromResult(ServedCount);
         public Task<List<HealthTopic>> GetServedTopicBatchAsync(int skip, int take, CancellationToken ct)
         {
