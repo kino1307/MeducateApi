@@ -61,7 +61,7 @@ public class ApiEndToEndTests(MeducateApiFactory factory) : IClassFixture<Meduca
         var client = NewClientWithCsrfHeader(factory);
         var email = $"integration-{Guid.NewGuid():N}@example.com";
 
-        var registerResponse = await client.PostAsJsonAsync("/api/v1/users/register", new { email });
+        var registerResponse = await client.PostAsJsonAsync("/api/v1/users/register", new { email, acceptedTerms = true });
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
 
         var verifyUrl = factory.EmailService.LastVerificationUrl;
@@ -92,7 +92,7 @@ public class ApiEndToEndTests(MeducateApiFactory factory) : IClassFixture<Meduca
         var client = NewClientWithCsrfHeader(factory);
         var email = $"integration-org-{Guid.NewGuid():N}@example.com";
 
-        await client.PostAsJsonAsync("/api/v1/users/register", new { email });
+        await client.PostAsJsonAsync("/api/v1/users/register", new { email, acceptedTerms = true });
         var token = QueryHelpers.ParseQuery(new Uri(factory.EmailService.LastVerificationUrl!).Query)["token"].ToString();
         var verifyResponse = await client.PostAsJsonAsync("/api/v1/users/verify", new { token });
         var authCookie = ExtractSetCookieValue(verifyResponse, "meducateapi_auth")!;
