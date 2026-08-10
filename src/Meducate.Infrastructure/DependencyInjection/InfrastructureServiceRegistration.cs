@@ -64,7 +64,6 @@ internal static class InfrastructureServiceRegistration
             var cfg = sp.GetRequiredService<IConfiguration>();
             return SemanticKernelBuilder.CreateKernel(cfg);
         });
-        services.AddSingleton<ILLMProcessorLogger, LLMProcessorLogger>();
         services.AddScoped<ILLMProcessor, SemanticKernelLLMProcessor>();
 
         // Medical data providers

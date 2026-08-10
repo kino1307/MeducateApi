@@ -5,12 +5,13 @@ using System.Text.RegularExpressions;
 using Meducate.Application.Helpers;
 using Meducate.Domain.Entities;
 using Meducate.Domain.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 
-internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProcessorLogger? logger = null) : ILLMProcessor
+internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<SemanticKernelLLMProcessor>? logger = null) : ILLMProcessor
 {
     private readonly Kernel _kernel = kernel;
-    private readonly ILLMProcessorLogger? _logger = logger;
+    private readonly ILogger<SemanticKernelLLMProcessor>? _logger = logger;
 
     private const int MaxRawTextSize = 10 * 1024 * 1024;
     private const int MaxTopicNameLength = 200;
@@ -519,7 +520,7 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
 
         if (!ShouldProcessTopicType(topicType))
         {
-            _logger?.LogSkippedTopic(discoveredName ?? "Unknown", $"Filtered topic type: {topicType}");
+            _logger?.LogInformation("LLM skipped topic '{Topic}': {Reason}", discoveredName ?? "Unknown", $"Filtered topic type: {topicType}");
             return null;
         }
 
@@ -691,7 +692,7 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
             || corrected.Actions?.SequenceEqual(extracted.Actions ?? [], StringComparer.Ordinal) == false;
 
         if (summaryChanged || fieldsChanged)
-            _logger?.LogVerificationCorrected(extracted.Name);
+            _logger?.LogWarning("LLM verification corrected extracted content for topic '{Topic}'", extracted.Name);
 
         return corrected;
     }
@@ -781,8 +782,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
 
                 if (classified.Count == 0 && batch.Length > 0)
                 {
-                    _logger?.LogBatchError(nameof(ClassifyTopicNamesAsync), batch.Length,
-                        new InvalidOperationException("LLM returned empty or unparseable JSON for classify batch"));
+                    _logger?.LogError(new InvalidOperationException("LLM returned empty or unparseable JSON for classify batch"),
+                        "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics", nameof(ClassifyTopicNamesAsync), batch.Length);
                 }
 
                 foreach (var kvp in classified)
@@ -793,12 +794,12 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
                     if (ValidTopicTypes.Contains(kvp.Value))
                         allClassified[kvp.Key] = kvp.Value;
                     else
-                        _logger?.LogInvalidClassification(kvp.Key, kvp.Value);
+                        _logger?.LogWarning("LLM returned invalid classification '{Type}' for topic '{Topic}'", kvp.Value, kvp.Key);
                 }
             }
             catch (Exception ex)
             {
-                _logger?.LogBatchError(nameof(ClassifyTopicNamesAsync), batch.Length, ex);
+                _logger?.LogError(ex, "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics", nameof(ClassifyTopicNamesAsync), batch.Length);
                 continue;
             }
         }
@@ -835,8 +836,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
 
                 if (categorized.Count == 0 && batch.Length > 0)
                 {
-                    _logger?.LogBatchError(nameof(ClassifyTopicCategoriesAsync), batch.Length,
-                        new InvalidOperationException("LLM returned empty or unparseable JSON for category batch"));
+                    _logger?.LogError(new InvalidOperationException("LLM returned empty or unparseable JSON for category batch"),
+                        "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics", nameof(ClassifyTopicCategoriesAsync), batch.Length);
                 }
 
                 foreach (var kvp in categorized)
@@ -850,7 +851,7 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
 
                     if (!IsValidTypeCategoryPair(inputTopic.TopicType, kvp.Value))
                     {
-                        _logger?.LogInvalidCategoryPair(kvp.Key, inputTopic.TopicType, kvp.Value);
+                        _logger?.LogWarning("LLM returned invalid category '{Category}' for topic '{Topic}' (type: {Type})", kvp.Value, kvp.Key, inputTopic.TopicType);
                         continue;
                     }
 
@@ -859,7 +860,7 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
             }
             catch (Exception ex)
             {
-                _logger?.LogBatchError(nameof(ClassifyTopicCategoriesAsync), batch.Length, ex);
+                _logger?.LogError(ex, "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics", nameof(ClassifyTopicCategoriesAsync), batch.Length);
                 continue;
             }
         }
@@ -939,7 +940,7 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILLMProc
             }
             catch (Exception ex)
             {
-                _logger?.LogBatchError(nameof(MatchOriginalNamesAsync), batch.Length, ex);
+                _logger?.LogError(ex, "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics", nameof(MatchOriginalNamesAsync), batch.Length);
                 continue;
             }
         }

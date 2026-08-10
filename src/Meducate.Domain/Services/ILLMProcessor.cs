@@ -14,15 +14,6 @@ internal interface ILLMProcessor
     IReadOnlySet<string> GetValidCategories();
 }
 
-internal interface ILLMProcessorLogger
-{
-    void LogSkippedTopic(string topicName, string reason);
-    void LogInvalidClassification(string topicName, string invalidType);
-    void LogInvalidCategoryPair(string topicName, string type, string category);
-    void LogBatchError(string operation, int batchSize, Exception exception);
-    void LogVerificationCorrected(string topicName);
-}
-
 internal sealed record BroaderNameResult(string PreferredName, bool ShouldReplace);
 
 internal sealed record TopicClassifyInput(string Name, string? SummarySnippet = null);
