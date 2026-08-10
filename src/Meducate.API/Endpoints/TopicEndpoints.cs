@@ -19,7 +19,7 @@ internal static class TopicEndpoints
         .Produces<IReadOnlyList<TopicTypeSummary>>()
         .WithTags("Topics");
 
-        app.MapGet("/topics/search", [RequiresApiKey] async (string query, int? skip, int? take, string? type, ITopicRepository repo, CancellationToken ct) =>
+        app.MapGet("/topics/search", [RequiresApiKey] async (string? query, int? skip, int? take, int? page, int? pageSize, string? type, ITopicRepository repo, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(query) || query.Length > ApiConstants.MaxQueryLength)
                 return Results.Problem(
@@ -27,13 +27,7 @@ internal static class TopicEndpoints
                     title: "Bad Request",
                     statusCode: StatusCodes.Status400BadRequest);
 
-            var s = skip is null or < 0 ? 0 : skip.Value;
-            var t = take switch
-            {
-                null or <= 0 => ApiConstants.DefaultPageSize,
-                > ApiConstants.MaxPageSize => ApiConstants.MaxPageSize,
-                _ => take.Value
-            };
+            var (s, t) = ResolvePaging(skip, take, page, pageSize);
 
             var results = await repo.SearchAsync(query, s, t, type, ct);
             var totalCount = await repo.SearchCountAsync(query, type, ct);
@@ -41,7 +35,7 @@ internal static class TopicEndpoints
         })
         .WithName("SearchTopics")
         .WithSummary("Search topics")
-        .WithDescription("Searches health topics by name using a partial match. Use `skip` and `take` to paginate results (default: 50 per page, max: 200). Use `type` to filter by topic type (e.g. Disease, Drug).")
+        .WithDescription("Searches health topics by name using a partial match. Use `skip` and `take` (or `page` and `pageSize`) to paginate results (default: 50 per page, max: 200). Use `type` to filter by topic type (e.g. Disease, Drug).")
         .Produces<PaginatedResponse<TopicListItem>>()
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .WithTags("Topics");
@@ -72,16 +66,9 @@ internal static class TopicEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound)
         .WithTags("Topics");
 
-        app.MapGet("/topics", [RequiresApiKey] async (int? skip, int? take, string? type, ITopicRepository repo, CancellationToken ct) =>
+        app.MapGet("/topics", [RequiresApiKey] async (int? skip, int? take, int? page, int? pageSize, string? type, ITopicRepository repo, CancellationToken ct) =>
         {
-            var s = skip is null or < 0 ? 0 : skip.Value;
-
-            var t = take switch
-            {
-                null or <= 0 => ApiConstants.DefaultPageSize,
-                > ApiConstants.MaxPageSize => ApiConstants.MaxPageSize,
-                _ => take.Value
-            };
+            var (s, t) = ResolvePaging(skip, take, page, pageSize);
 
             var topics = await repo.GetAllAsync(s, t, type, ct);
             var totalCount = await repo.GetCountAsync(type, ct);
@@ -89,10 +76,29 @@ internal static class TopicEndpoints
         })
         .WithName("ListTopics")
         .WithSummary("List all topics")
-        .WithDescription("Returns a paginated list of all health topics. Use `skip` and `take` to paginate (default: 50 per page, max: 200). Use `type` to filter by topic type (e.g. Disease, Drug).")
+        .WithDescription("Returns a paginated list of all health topics. Use `skip` and `take` (or `page` and `pageSize`) to paginate (default: 50 per page, max: 200). Use `type` to filter by topic type (e.g. Disease, Drug).")
         .Produces<PaginatedResponse<TopicListItem>>()
         .WithTags("Topics");
 
         return app;
+    }
+
+    // Accepts either skip/take or page/pageSize (1-based) — the response body's own
+    // pagination metadata uses "page"/"pageSize" terminology, so callers who mirror
+    // that back as request params should work rather than silently no-op.
+    private static (int Skip, int Take) ResolvePaging(int? skip, int? take, int? page, int? pageSize)
+    {
+        var t = (take ?? pageSize) switch
+        {
+            null or <= 0 => ApiConstants.DefaultPageSize,
+            > ApiConstants.MaxPageSize => ApiConstants.MaxPageSize,
+            var v => v.Value
+        };
+
+        var s = page is > 0
+            ? (page.Value - 1) * t
+            : skip is null or < 0 ? 0 : skip.Value;
+
+        return (s, t);
     }
 }

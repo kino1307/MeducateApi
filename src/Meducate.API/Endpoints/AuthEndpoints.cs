@@ -46,6 +46,13 @@ internal static class AuthEndpoints
 
             var isSignIn = string.Equals(request.Mode, "signin", StringComparison.OrdinalIgnoreCase);
 
+            if (!isSignIn && !request.AcceptedTerms)
+            {
+                return Results.Problem(
+                    detail: "You must accept the Privacy Policy and Terms of Service to create an account.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
             User user;
             if (isSignIn)
             {
@@ -62,7 +69,7 @@ internal static class AuthEndpoints
             {
                 user = await users.GetOrCreateAsync(request.Email, ct);
 
-                if (request.TermsVersion is not null)
+                if (request.AcceptedTerms && request.TermsVersion is not null)
                 {
                     user.AcceptedTermsAt = DateTime.UtcNow;
                     user.AcceptedTermsVersion = request.TermsVersion;

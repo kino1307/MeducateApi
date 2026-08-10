@@ -92,12 +92,12 @@
             @if (_activeTab == "curl")
             {
                 <pre class="bg-light p-3 rounded"><code>curl -H "X-Api-Key: YOUR_API_KEY" \
-  "https://api.meducateapi.com/api/topics/search?query=diabetes"</code></pre>
+  "https://api.meducateapi.com/api/v1/topics/search?query=diabetes"</code></pre>
             }
             else if (_activeTab == "js")
             {
                 <pre class="bg-light p-3 rounded"><code>const response = await fetch(
-  "https://api.meducateapi.com/api/topics/search?query=diabetes",
+  "https://api.meducateapi.com/api/v1/topics/search?query=diabetes",
   { headers: { "X-Api-Key": "YOUR_API_KEY" } }
 );
 const data = await response.json();
@@ -108,7 +108,7 @@ console.log(data);</code></pre>
                 <pre class="bg-light p-3 rounded"><code>import requests
 
 response = requests.get(
-    "https://api.meducateapi.com/api/topics/search?query=diabetes",
+    "https://api.meducateapi.com/api/v1/topics/search?query=diabetes",
     headers={"X-Api-Key": "YOUR_API_KEY"}
 )
 print(response.json())</code></pre>
@@ -121,7 +121,8 @@ print(response.json())</code></pre>
             <ul class="mt-3">
                 <li><strong>1,000 requests per day</strong> per API key</li>
                 <li>Usage resets every 24 hours (midnight UTC)</li>
-                <li>Requests exceeding the limit will receive a 429 response</li>
+                <li><strong>60 requests per minute</strong> per API key (burst limit, resets continuously)</li>
+                <li>Requests exceeding either limit will receive a 429 response</li>
                 <li>You can create up to 5 API keys per organisation</li>
             </ul>
 

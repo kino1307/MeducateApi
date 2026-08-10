@@ -35,6 +35,7 @@
                     @if (_form is not null && !IsCompleted)
                     {
                         <EditForm FormName="UserRegistrationForm" Model="_form" OnValidSubmit="Submit" class="was-validated">
+                            <DataAnnotationsValidator />
                             <label for="usernameInput" class="form-label h5">Email address</label>
                             <InputText id="usernameInput" @bind-Value="_form.Username" type="email" class="form-control" required />
 
@@ -57,6 +58,7 @@
                                         and
                                         <button type="button" class="btn btn-link p-0 align-baseline small" @onclick="OpenTermsModal">Terms of Service</button>.
                                     </label>
+                                    <ValidationMessage For="() => _form.AcceptedTerms" class="d-block small" />
                                 </div>
                             }
 
@@ -153,12 +155,25 @@
     [SupplyParameterFromQuery(Name = "mode")]
     private string? Mode { get; set; }
 
-    private sealed record UserRegistrationRequestForm
+    private sealed record UserRegistrationRequestForm : System.ComponentModel.DataAnnotations.IValidatableObject
     {
         public string Username { get; set; } = "";
         public bool AcceptedTerms { get; set; }
         public string? Website { get; set; }
         public string Timestamp { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+
+        // Only required when creating a new account — existing users signing in don't re-accept.
+        internal bool IsCreateMode { get; set; } = true;
+
+        public IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(System.ComponentModel.DataAnnotations.ValidationContext validationContext)
+        {
+            if (IsCreateMode && !AcceptedTerms)
+            {
+                yield return new System.ComponentModel.DataAnnotations.ValidationResult(
+                    "You must agree to the Privacy Policy and Terms of Service.",
+                    [nameof(AcceptedTerms)]);
+            }
+        }
     }
 
     [SupplyParameterFromForm]
@@ -167,6 +182,9 @@
     protected override void OnParametersSet()
     {
         _isCreateMode = Mode is null || string.Equals(Mode, "create", StringComparison.OrdinalIgnoreCase);
+
+        if (_form is not null)
+            _form.IsCreateMode = _isCreateMode;
     }
 
     protected override async Task OnInitializedAsync()
@@ -264,10 +282,11 @@
         {
             var response = await Api.RegisterUserAsync(
                 _form.Username,
-                _isCreateMode ? "create" : "signin",
-                _isCreateMode ? "2026-03-02" : null,
-                _form.Website,
-                _form.Timestamp);
+                mode: _isCreateMode ? "create" : "signin",
+                acceptedTerms: _form.AcceptedTerms,
+                termsVersion: _isCreateMode ? "2026-03-02" : null,
+                website: _form.Website,
+                timestamp: _form.Timestamp);
 
             Alert = response.Message;
             AlertCss = response.IsSuccess ? "alert-success" : "alert-danger";

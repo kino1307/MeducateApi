@@ -9,6 +9,8 @@ internal sealed record RegisterRequest
 
     public string? Mode { get; init; }
 
+    public bool AcceptedTerms { get; init; }
+
     public string? TermsVersion { get; init; }
 
     public string? Website { get; init; }

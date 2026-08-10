@@ -187,9 +187,10 @@
             <p>API usage is rate limited.</p>
 
             <ul class="mt-3">
-                <li><strong>1,000 requests per day</strong> per organisation</li>
+                <li><strong>1,000 requests per day</strong> per API key (up to 5 keys per organisation)</li>
+                <li><strong>60 requests per minute</strong> burst limit per API key</li>
                 <li>Usage resets every 24 hours</li>
-                <li>Requests exceeding the limit will be rejected</li>
+                <li>Requests exceeding either limit will be rejected</li>
             </ul>
 
             <hr>

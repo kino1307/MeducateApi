@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Meducate.API.Infrastructure;
 using Meducate.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 
@@ -57,6 +58,24 @@ internal static class ApiServiceRegistration
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            options.OnRejected = async (context, ct) =>
+            {
+                var retryAfterSeconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
+                    ? (int)retryAfter.TotalSeconds
+                    : 60;
+
+                context.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
+                context.HttpContext.Response.ContentType = "application/problem+json";
+
+                await context.HttpContext.Response.WriteAsJsonAsync(new
+                {
+                    type = "https://tools.ietf.org/html/rfc6585#section-4",
+                    title = "Too Many Requests",
+                    status = StatusCodes.Status429TooManyRequests,
+                    detail = $"Rate limit exceeded: 60 requests per minute per API key. Retry in {retryAfterSeconds} seconds.",
+                }, ct);
+            };
 
             options.GlobalLimiter =
                 PartitionedRateLimiter.Create<HttpContext, string>(context =>
