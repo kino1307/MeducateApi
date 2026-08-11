@@ -244,13 +244,7 @@ Blazor Server. Calls `Meducate.API` over HTTP via `ApiService`. Auth cookies for
 
 ## Commit convention
 
-Squash all changes into a single commit, amend + force push master. Commit message is always:
-
-```
-MeducateAPI - Medical education API platform
-```
-
-Do not deviate without being asked.
+Regular commits with short, descriptive messages explaining the why, not just the what. No squashing, no force-pushing master.
 
 ---
 
