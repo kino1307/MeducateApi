@@ -27,6 +27,7 @@ MeducateAPI automatically discovers and aggregates medical topics from authorita
 - **Rate limiting** — two-tier system: 60 req/min per key + configurable daily limits with 80% usage alerts
 - **Automated topic discovery** — daily Hangfire jobs fetch new topics from MedlinePlus at 2 AM UTC
 - **Automated topic refresh** — existing topics re-processed daily at 3 AM UTC for accuracy
+- **Nightly drift detection** — a rotating batch of live topics is re-checked against their original source text each night; low keyword overlap flags likely hallucination or staleness, and structural failures (missing fields, invalid categories) trigger an email alert
 - **Topic classification** — LLM-powered categorisation into 24 standardised medical categories
 - **ICD-11 coding** — diagnosable topics (Disease, Disorder, Syndrome, Symptom, Mental Health) are matched against the WHO ICD-11 API for a real, verifiable diagnostic code — not LLM-generated
 - **Interactive Swagger docs** — full OpenAPI spec with try-it-out support
