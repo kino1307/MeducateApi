@@ -16,6 +16,11 @@ html, body {
     --bs-emphasis-color-rgb: 28, 28, 26;
     --bs-tertiary-bg: #f2f1ee;
     --bs-tertiary-bg-rgb: 242, 241, 238;
+    /* Bootstrap's .bg-light utility reads --bs-light, a separate variable from
+       --bs-tertiary-bg that Bootstrap itself never re-themes for dark mode —
+       code blocks etc. would otherwise render dark-mode text on a stock-light panel. */
+    --bs-light: #f2f1ee;
+    --bs-light-rgb: 242, 241, 238;
     --bs-border-color: #e2e0da;
 
     --bs-primary: #1b6ec2;
@@ -64,6 +69,8 @@ html, body {
     --bs-emphasis-color-rgb: 232, 230, 225;
     --bs-tertiary-bg: #252523;
     --bs-tertiary-bg-rgb: 37, 37, 35;
+    --bs-light: #252523;
+    --bs-light-rgb: 37, 37, 35;
     --bs-border-color: #3a3a36;
 
     --bs-primary: #5b9bd9;
