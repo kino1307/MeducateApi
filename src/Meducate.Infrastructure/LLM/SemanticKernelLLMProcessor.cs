@@ -315,6 +315,9 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
             22. Diagnostic & Laboratory - tests, imaging, diagnostic procedures
             23. Nutrition & Dietary - nutrients, diet, supplements, food-related
             24. Health & Wellness - general wellness, fitness, lifestyle, self-care
+            25. Sleep-Wake Disorders - insomnia, sleep apnea, narcolepsy, circadian rhythm disorders
+            26. Sexual Health - sexual dysfunction, sexual response, sexual health conditions
+                not specific to reproductive organ anatomy
 
             TYPE-SPECIFIC MANDATORY MAPPINGS:
             - Type "Drug" → MUST go to "Drugs & Medications"
@@ -333,6 +336,13 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
             - Topics about babies/infants/newborns with general health → "Symptoms & Signs"
             - "Chronic Illness" or general coping topics → "Health & Wellness" (not "Mental & Behavioral" unless explicitly psychiatric)
             - VLDL Cholesterol, cholesterol topics → "Endocrine, Nutritional & Metabolic"
+            - Insomnia, Sleep Apnea, Sleep Disorders, Sleep Deprivation, Narcolepsy → "Sleep-Wake Disorders"
+              (not "Mental & Behavioral" or "Nervous System", even when caused by a psychiatric or
+              neurological condition — the sleep disturbance itself is the topic)
+            - Sexual Dysfunction, Erectile Dysfunction, Female Sexual Dysfunction, Low Libido → "Sexual Health"
+              (not "Genitourinary System" or "Endocrine, Nutritional & Metabolic")
+            - Sexual assault/abuse topics stay "Mental & Behavioral" — "Sexual Health" is for sexual
+              function/response conditions, not trauma
 
             Return ONLY a raw JSON object mapping each topic name to its category.
             No explanation, no code fences.
@@ -714,7 +724,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
         "Symptoms & Signs", "Injury & Poisoning", "External Causes & Factors",
         "Preventive Care & Screening", "Drugs & Medications",
         "Medical Procedures & Interventions", "Diagnostic & Laboratory",
-        "Nutrition & Dietary", "Health & Wellness"
+        "Nutrition & Dietary", "Health & Wellness",
+        "Sleep-Wake Disorders", "Sexual Health"
     };
 
     private static readonly HashSet<string> FilteredTopicTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -760,46 +771,64 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
 
         foreach (var batch in topics.Chunk(ClassifyBatchSize))
         {
-            try
+            var topicsText = string.Join("\n", batch.Select(t =>
             {
-                var topicsText = string.Join("\n", batch.Select(t =>
+                var snippet = TruncateToSentence(t.SummarySnippet, MaxSnippetLength);
+                return string.IsNullOrWhiteSpace(snippet)
+                    ? $"- {t.Name}"
+                    : $"- {t.Name}: {snippet}";
+            }));
+
+            // A batch occasionally comes back with empty/unparseable JSON (LLM flakiness on
+            // large batches) — one retry recovers the vast majority of these transient misses
+            // instead of silently losing up to ClassifyBatchSize topics for the whole run.
+            Dictionary<string, string> classified = [];
+            for (var attempt = 1; attempt <= 2; attempt++)
+            {
+                try
                 {
-                    var snippet = TruncateToSentence(t.SummarySnippet, MaxSnippetLength);
-                    return string.IsNullOrWhiteSpace(snippet)
-                        ? $"- {t.Name}"
-                        : $"- {t.Name}: {snippet}";
-                }));
+                    var result = await _kernel.InvokeAsync(
+                        _classifyFunction,
+                        new() { { "topics", topicsText } },
+                        ct
+                    );
 
-                var result = await _kernel.InvokeAsync(
-                    _classifyFunction,
-                    new() { { "topics", topicsText } },
-                    ct
-                );
+                    var json = CleanupJson(result.GetValue<string>() ?? "{}");
+                    classified = JsonSerializer.Deserialize<Dictionary<string, string>>(json, _jsonOptions) ?? [];
 
-                var json = CleanupJson(result.GetValue<string>() ?? "{}");
-                var classified = JsonSerializer.Deserialize<Dictionary<string, string>>(json, _jsonOptions) ?? [];
+                    if (classified.Count > 0 || batch.Length == 0)
+                        break;
 
-                if (classified.Count == 0 && batch.Length > 0)
-                {
-                    _logger?.LogError(new InvalidOperationException("LLM returned empty or unparseable JSON for classify batch"),
-                        "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics", nameof(ClassifyTopicNamesAsync), batch.Length);
+                    _logger?.LogWarning("LLM returned empty or unparseable JSON for classify batch of {BatchSize} topics (attempt {Attempt}/2)",
+                        batch.Length, attempt);
                 }
-
-                foreach (var kvp in classified)
+                catch (Exception ex) when (attempt == 1)
                 {
-                    if (!batch.Any(t => string.Equals(t.Name, kvp.Key, StringComparison.OrdinalIgnoreCase)))
-                        continue;
-
-                    if (ValidTopicTypes.Contains(kvp.Value))
-                        allClassified[kvp.Key] = kvp.Value;
-                    else
-                        _logger?.LogWarning("LLM returned invalid classification '{Type}' for topic '{Topic}'", kvp.Value, kvp.Key);
+                    _logger?.LogWarning(ex, "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics (attempt {Attempt}/2)",
+                        nameof(ClassifyTopicNamesAsync), batch.Length, attempt);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics after retry",
+                        nameof(ClassifyTopicNamesAsync), batch.Length);
                 }
             }
-            catch (Exception ex)
+
+            if (classified.Count == 0 && batch.Length > 0)
             {
-                _logger?.LogError(ex, "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics", nameof(ClassifyTopicNamesAsync), batch.Length);
-                continue;
+                _logger?.LogError(new InvalidOperationException("LLM returned empty or unparseable JSON for classify batch after retry"),
+                    "LLM batch operation '{Operation}' failed for batch of {BatchSize} topics after retry", nameof(ClassifyTopicNamesAsync), batch.Length);
+            }
+
+            foreach (var kvp in classified)
+            {
+                if (!batch.Any(t => string.Equals(t.Name, kvp.Key, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                if (ValidTopicTypes.Contains(kvp.Value))
+                    allClassified[kvp.Key] = kvp.Value;
+                else
+                    _logger?.LogWarning("LLM returned invalid classification '{Type}' for topic '{Topic}'", kvp.Value, kvp.Key);
             }
         }
 
