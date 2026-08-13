@@ -223,6 +223,13 @@ internal sealed class TopicBackfillService(
         { "Frostbite", "Injury & Poisoning" },
         { "Chronic Illness", "Health & Wellness" },
         { "VLDL Cholesterol", "Endocrine, Nutritional & Metabolic" },
+        { "Sleep Apnea", "Sleep-Wake Disorders" },
+        { "Insomnia", "Sleep-Wake Disorders" },
+        { "Sleep Disorders", "Sleep-Wake Disorders" },
+        { "Sleep Deprivation", "Sleep-Wake Disorders" },
+        { "Sexual Dysfunction", "Sexual Health" },
+        { "Erectile Dysfunction", "Sexual Health" },
+        { "Female Sexual Dysfunction", "Sexual Health" },
     };
 
     internal async Task<int> BackfillBadCategoriesAsync(CancellationToken ct, PerformContext? console = null)
