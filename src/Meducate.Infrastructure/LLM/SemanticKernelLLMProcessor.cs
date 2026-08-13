@@ -719,8 +719,7 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
 
     private static readonly HashSet<string> FilteredTopicTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Non-Medical", "Other", "Anatomy", "Drug", "Procedure",
-        "Diagnostic Test", "Vaccine", "Nutrient", "Lifestyle"
+        "Non-Medical", "Other", "Lifestyle"
     };
 
     public bool ShouldProcessTopicType(string? topicType)
