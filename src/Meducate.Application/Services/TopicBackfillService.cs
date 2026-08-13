@@ -240,14 +240,18 @@ internal sealed class TopicBackfillService(
     // differently-scoped candidate was "the same broader subject" and renamed this entry to
     // match it) and their correct name, restored from OriginalName once the mistake is found.
     // Only corrects if the current name still matches the wrong value, so this is idempotent.
-    private static readonly Dictionary<string, string> NameCorrections = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "COVID-19 Vaccines", "COVID-19" },
-    };
+    // Order matters when a correction's target name is itself occupied by another wrong name
+    // being corrected in the same pass (see COVID-19 below) — earlier entries free up names
+    // that later entries need, and each correction is saved individually so later ones see it.
+    private static readonly List<(string WrongName, string CorrectName)> NameCorrections =
+    [
+        ("COVID-19", "COVID-19 Testing"),
+        ("COVID-19 Vaccines", "COVID-19"),
+    ];
 
     internal async Task<int> BackfillBadNamesAsync(CancellationToken ct, PerformContext? console = null)
     {
-        var corrected = new List<HealthTopic>();
+        var correctedCount = 0;
 
         foreach (var (wrongName, correctName) in NameCorrections)
         {
@@ -255,35 +259,38 @@ internal sealed class TopicBackfillService(
             if (topic is null)
                 continue;
 
-            if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation("Correcting name for topic: '{Old}' → '{New}'", topic.Name, correctName);
-
-            console?.WriteLine($"  [{topic.Name}] renamed → {correctName}");
+            // Renaming to a name another topic already holds would violate the name
+            // uniqueness constraint and take the whole SaveChanges (and everything after
+            // it in this job) down with it. Skip for now — it'll retry next run once
+            // whatever holds that name has moved (or stop trying if it's a real conflict).
+            var collision = await _queryRepo.GetByNameTrackedAsync(correctName, ct);
+            if (collision is not null)
+            {
+                _logger.LogWarning("Skipping name correction '{Old}' → '{New}': target name already in use", wrongName, correctName);
+                console?.WriteLine($"  [{wrongName}] skipped rename to '{correctName}' — name already taken");
+                continue;
+            }
 
             topic.Name = correctName;
-            corrected.Add(topic);
+
+            try
+            {
+                await _writeRepo.SaveChangesAsync(ct);
+
+                if (_logger.IsEnabled(LogLevel.Information))
+                    _logger.LogInformation("Corrected name for topic: '{Old}' → '{New}'", wrongName, correctName);
+
+                console?.WriteLine($"  [{wrongName}] renamed → {correctName}");
+                correctedCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save name correction '{Old}' → '{New}'", wrongName, correctName);
+                console?.WriteLine($"  [{wrongName}] rename to '{correctName}' failed: {ex.Message}");
+            }
         }
 
-        if (corrected.Count == 0)
-            return 0;
-
-        try
-        {
-            await _writeRepo.SaveChangesAsync(ct);
-
-            if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation("Corrected names on {Count} topics", corrected.Count);
-
-            console?.WriteLine($"Corrected {corrected.Count} incorrectly-renamed topics.");
-
-            return corrected.Count;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to save name corrections");
-            console?.WriteLine($"Failed to save name corrections: {ex.Message}");
-            return 0;
-        }
+        return correctedCount;
     }
 
     internal async Task<int> BackfillBadCategoriesAsync(CancellationToken ct, PerformContext? console = null)
