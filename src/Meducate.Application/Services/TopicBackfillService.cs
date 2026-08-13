@@ -230,7 +230,61 @@ internal sealed class TopicBackfillService(
         { "Sexual Dysfunction", "Sexual Health" },
         { "Erectile Dysfunction", "Sexual Health" },
         { "Female Sexual Dysfunction", "Sexual Health" },
+        { "Sarcoidosis", "Blood & Immune System" },
+        { "Heat Illness", "Symptoms & Signs" },
+        { "Hay Fever", "Respiratory System" },
+        { "Meningitis", "Infectious & Parasitic Diseases" },
     };
+
+    // Topic names that were incorrectly renamed by the synonym-merge logic (LLM decided a
+    // differently-scoped candidate was "the same broader subject" and renamed this entry to
+    // match it) and their correct name, restored from OriginalName once the mistake is found.
+    // Only corrects if the current name still matches the wrong value, so this is idempotent.
+    private static readonly Dictionary<string, string> NameCorrections = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "COVID-19 Vaccines", "COVID-19" },
+    };
+
+    internal async Task<int> BackfillBadNamesAsync(CancellationToken ct, PerformContext? console = null)
+    {
+        var corrected = new List<HealthTopic>();
+
+        foreach (var (wrongName, correctName) in NameCorrections)
+        {
+            var topic = await _queryRepo.GetByNameTrackedAsync(wrongName, ct);
+            if (topic is null)
+                continue;
+
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Correcting name for topic: '{Old}' → '{New}'", topic.Name, correctName);
+
+            console?.WriteLine($"  [{topic.Name}] renamed → {correctName}");
+
+            topic.Name = correctName;
+            corrected.Add(topic);
+        }
+
+        if (corrected.Count == 0)
+            return 0;
+
+        try
+        {
+            await _writeRepo.SaveChangesAsync(ct);
+
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Corrected names on {Count} topics", corrected.Count);
+
+            console?.WriteLine($"Corrected {corrected.Count} incorrectly-renamed topics.");
+
+            return corrected.Count;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save name corrections");
+            console?.WriteLine($"Failed to save name corrections: {ex.Message}");
+            return 0;
+        }
+    }
 
     internal async Task<int> BackfillBadCategoriesAsync(CancellationToken ct, PerformContext? console = null)
     {

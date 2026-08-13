@@ -380,6 +380,9 @@ internal sealed class TopicIngestionService(
         // 9. Backfill TopicType for any existing records that don't have one
         var backfilledCount = await _backfillService.BackfillTopicTypesAsync(ct, console);
 
+        // 9b. Correct topics renamed incorrectly by the synonym-merge logic
+        var badNamesCount = await _backfillService.BackfillBadNamesAsync(ct, console);
+
         // 10. Flag topics with empty structured fields for reprocessing
         var emptyFieldsCount = await _backfillService.BackfillEmptyStructuredFieldsAsync(ct, console);
 
@@ -407,14 +410,14 @@ internal sealed class TopicIngestionService(
 
         if (addedCount > 0 || removedCount > 0 || backfilledCount > 0 || categorizedCount > 0
             || backfilledOriginalNames > 0 || emptyFieldsCount > 0 || badCategoriesCount > 0
-            || uncategorizedRemovedCount > 0 || icd11Count > 0)
+            || badNamesCount > 0 || uncategorizedRemovedCount > 0 || icd11Count > 0)
             _topicRepo.InvalidateCache();
 
         if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Medical data ingestion complete — added {Added}, removed {Removed}, backfilled types {Backfilled}, backfilled originals {BackfilledOriginals}, categorized {Categorized}, flagged empty {EmptyFields}, cleared bad categories {BadCategories}, removed uncategorized {Uncategorized}, ICD-11 coded {Icd11}",
-                addedCount, removedCount, backfilledCount, backfilledOriginalNames, categorizedCount, emptyFieldsCount, badCategoriesCount, uncategorizedRemovedCount, icd11Count);
+            _logger.LogInformation("Medical data ingestion complete — added {Added}, removed {Removed}, backfilled types {Backfilled}, backfilled originals {BackfilledOriginals}, categorized {Categorized}, flagged empty {EmptyFields}, cleared bad categories {BadCategories}, corrected names {BadNames}, removed uncategorized {Uncategorized}, ICD-11 coded {Icd11}",
+                addedCount, removedCount, backfilledCount, backfilledOriginalNames, categorizedCount, emptyFieldsCount, badCategoriesCount, badNamesCount, uncategorizedRemovedCount, icd11Count);
 
-        console?.WriteLine($"Discovery complete — added {addedCount}, removed {removedCount}, backfilled {backfilledCount} types, {backfilledOriginalNames} original names, categorized {categorizedCount}, flagged {emptyFieldsCount} empty, cleared {badCategoriesCount} bad categories, ICD-11 coded {icd11Count}.");
+        console?.WriteLine($"Discovery complete — added {addedCount}, removed {removedCount}, backfilled {backfilledCount} types, {backfilledOriginalNames} original names, categorized {categorizedCount}, flagged {emptyFieldsCount} empty, cleared {badCategoriesCount} bad categories, corrected {badNamesCount} bad names, ICD-11 coded {icd11Count}.");
     }
 
     private async Task<IReadOnlyList<RawTopicData>> DiscoverSafeAsync(
