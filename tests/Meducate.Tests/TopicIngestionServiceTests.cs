@@ -171,7 +171,7 @@ public class TopicIngestionServiceTests
     }
 
     [Fact]
-    public async Task IngestAsync_SynonymCollision_SkipsMerge_WhenLlmSaysDifferentSubject()
+    public async Task IngestAsync_SynonymCollision_KeepsAsSeparateTopic_WhenLlmSaysDifferentSubject()
     {
         var existing = new HealthTopic { Name = "Bronchitis", RawSource = "old data" };
         var provider = new FakeProvider("TestSource", [new RawTopicData("Acute Bronchitis", new string('x', 200), "TestSource")]);
@@ -189,9 +189,12 @@ public class TopicIngestionServiceTests
 
         await service.IngestAsync();
 
+        // The existing entity is untouched — the new topic is kept under its own
+        // originally-discovered name instead of being merged or dropped.
         Assert.Equal("old data", existing.RawSource);
         Assert.False(existing.NeedsLlmReprocessing);
-        Assert.Empty(writeRepo.Added);
+        var added = Assert.Single(writeRepo.Added);
+        Assert.Equal("Acute Bronchitis", added.Name);
     }
 
     [Fact]
