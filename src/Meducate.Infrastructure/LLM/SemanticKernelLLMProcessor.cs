@@ -7,6 +7,7 @@ using Meducate.Domain.Entities;
 using Meducate.Domain.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<SemanticKernelLLMProcessor>? logger = null) : ILLMProcessor
 {
@@ -18,6 +19,13 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
     private const int ClassifyBatchSize = 50;
     private const int CategoryBatchSize = 50;
     private const int MaxSnippetLength = 150;
+
+    // Every prompt in this class asks for raw JSON back. Without this, the model is only
+    // instruction-following its way to valid JSON — usually reliable, but on a rare miss it
+    // can drift out of JSON shape entirely. json_object mode makes that a hard API guarantee
+    // instead of a hope, for every function below. (All prompts already say "JSON" explicitly,
+    // which OpenAI requires for this mode.)
+    private static readonly OpenAIPromptExecutionSettings JsonResponseFormat = new() { ResponseFormat = "json_object" };
 
     static SemanticKernelLLMProcessor()
     {
@@ -114,7 +122,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
             SOURCE TEXT:
             {{$rawText}}
             """,
-            functionName: "ExtractMedicalInfo"
+            functionName: "ExtractMedicalInfo",
+            executionSettings: JsonResponseFormat
         );
 
     private readonly KernelFunction _verifyFunction = kernel.CreateFunctionFromPrompt(
@@ -186,7 +195,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
             EXTRACTED CONTENT:
             {{$extractedJson}}
             """,
-            functionName: "VerifyMedicalContent"
+            functionName: "VerifyMedicalContent",
+            executionSettings: JsonResponseFormat
         );
 
     private readonly KernelFunction _classifyFunction = kernel.CreateFunctionFromPrompt(
@@ -278,7 +288,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
             TOPICS:
             {{$topics}}
             """,
-            functionName: "ClassifyTopicNames"
+            functionName: "ClassifyTopicNames",
+            executionSettings: JsonResponseFormat
         );
 
     private readonly KernelFunction _categoryFunction = kernel.CreateFunctionFromPrompt(
@@ -350,7 +361,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
             TOPICS:
             {{$topics}}
             """,
-            functionName: "ClassifyTopicCategories"
+            functionName: "ClassifyTopicCategories",
+            executionSettings: JsonResponseFormat
         );
 
     private readonly KernelFunction _broaderNameFunction = kernel.CreateFunctionFromPrompt(
@@ -378,7 +390,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
             CANDIDATE (newly discovered): {{$candidate}}
             EXISTING (already in database): {{$existing}}
             """,
-            functionName: "CompareBroaderName"
+            functionName: "CompareBroaderName",
+            executionSettings: JsonResponseFormat
         );
 
     private readonly KernelFunction _matchOriginalNamesFunction = kernel.CreateFunctionFromPrompt(
@@ -402,7 +415,8 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
             NORMALIZED NAMES TO MATCH:
             {{$normalizedNames}}
             """,
-            functionName: "MatchOriginalNames"
+            functionName: "MatchOriginalNames",
+            executionSettings: JsonResponseFormat
         );
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
