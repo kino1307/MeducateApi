@@ -4,12 +4,13 @@ namespace Meducate.Domain.Repositories;
 
 internal interface ITopicRepository
 {
-    Task<IEnumerable<TopicListItem>> GetAllAsync(int skip = 0, int take = 50, string? topicType = null, CancellationToken ct = default);
-    Task<int> GetCountAsync(string? topicType = null, CancellationToken ct = default);
+    Task<IEnumerable<TopicListItem>> GetAllAsync(int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default);
+    Task<int> GetCountAsync(string? topicType = null, string? category = null, CancellationToken ct = default);
     Task<HealthTopic?> GetByNameAsync(string name, CancellationToken ct = default);
-    Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, CancellationToken ct = default);
-    Task<int> SearchCountAsync(string query, string? topicType = null, CancellationToken ct = default);
+    Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default);
+    Task<int> SearchCountAsync(string query, string? topicType = null, string? category = null, CancellationToken ct = default);
     Task<IReadOnlyList<TopicTypeSummary>> GetDistinctTypesAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<TopicCategorySummary>> GetDistinctCategoriesAsync(CancellationToken ct = default);
     void InvalidateCache();
 }
 
@@ -28,4 +29,9 @@ public sealed record TopicListItem(
 internal sealed record TopicTypeSummary(string Type, int Count)
 {
     public string Href => $"/api/v1/topics?type={Uri.EscapeDataString(Type)}";
+}
+
+internal sealed record TopicCategorySummary(string Category, int Count)
+{
+    public string Href => $"/api/v1/topics?category={Uri.EscapeDataString(Category)}";
 }

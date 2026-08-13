@@ -19,7 +19,18 @@ internal static class TopicEndpoints
         .Produces<IReadOnlyList<TopicTypeSummary>>()
         .WithTags("Topics");
 
-        app.MapGet("/topics/search", [RequiresApiKey] async (string? query, int? skip, int? take, int? page, int? pageSize, string? type, ITopicRepository repo, CancellationToken ct) =>
+        app.MapGet("/topics/categories", [RequiresApiKey] async (ITopicRepository repo, CancellationToken ct) =>
+        {
+            var categories = await repo.GetDistinctCategoriesAsync(ct);
+            return Results.Ok(categories);
+        })
+        .WithName("ListTopicCategories")
+        .WithSummary("List available topic categories")
+        .WithDescription("Returns a list of distinct medical categories currently in the database (e.g. Infectious & Parasitic Diseases, Nervous System). Categories group topics by body system and content type, independently of topic type.")
+        .Produces<IReadOnlyList<TopicCategorySummary>>()
+        .WithTags("Topics");
+
+        app.MapGet("/topics/search", [RequiresApiKey] async (string? query, int? skip, int? take, int? page, int? pageSize, string? type, string? category, ITopicRepository repo, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(query) || query.Length > ApiConstants.MaxQueryLength)
                 return Results.Problem(
@@ -29,13 +40,13 @@ internal static class TopicEndpoints
 
             var (s, t) = ResolvePaging(skip, take, page, pageSize);
 
-            var results = await repo.SearchAsync(query, s, t, type, ct);
-            var totalCount = await repo.SearchCountAsync(query, type, ct);
+            var results = await repo.SearchAsync(query, s, t, type, category, ct);
+            var totalCount = await repo.SearchCountAsync(query, type, category, ct);
             return Results.Ok(new PaginatedResponse<TopicListItem>(results, totalCount, s, t));
         })
         .WithName("SearchTopics")
         .WithSummary("Search topics")
-        .WithDescription("Searches health topics by name using a partial match. Use `skip` and `take` (or `page` and `pageSize`) to paginate results (default: 50 per page, max: 200). Use `type` to filter by topic type (e.g. Disease, Drug).")
+        .WithDescription("Searches health topics by name using a partial match. Use `skip` and `take` (or `page` and `pageSize`) to paginate results (default: 50 per page, max: 200). Use `type` to filter by topic type (e.g. Disease, Drug) and/or `category` to filter by medical category (e.g. Nervous System).")
         .Produces<PaginatedResponse<TopicListItem>>()
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .WithTags("Topics");
@@ -66,17 +77,17 @@ internal static class TopicEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound)
         .WithTags("Topics");
 
-        app.MapGet("/topics", [RequiresApiKey] async (int? skip, int? take, int? page, int? pageSize, string? type, ITopicRepository repo, CancellationToken ct) =>
+        app.MapGet("/topics", [RequiresApiKey] async (int? skip, int? take, int? page, int? pageSize, string? type, string? category, ITopicRepository repo, CancellationToken ct) =>
         {
             var (s, t) = ResolvePaging(skip, take, page, pageSize);
 
-            var topics = await repo.GetAllAsync(s, t, type, ct);
-            var totalCount = await repo.GetCountAsync(type, ct);
+            var topics = await repo.GetAllAsync(s, t, type, category, ct);
+            var totalCount = await repo.GetCountAsync(type, category, ct);
             return Results.Ok(new PaginatedResponse<TopicListItem>(topics, totalCount, s, t));
         })
         .WithName("ListTopics")
         .WithSummary("List all topics")
-        .WithDescription("Returns a paginated list of all health topics. Use `skip` and `take` (or `page` and `pageSize`) to paginate (default: 50 per page, max: 200). Use `type` to filter by topic type (e.g. Disease, Drug).")
+        .WithDescription("Returns a paginated list of all health topics. Use `skip` and `take` (or `page` and `pageSize`) to paginate (default: 50 per page, max: 200). Use `type` to filter by topic type (e.g. Disease, Drug) and/or `category` to filter by medical category (e.g. Nervous System).")
         .Produces<PaginatedResponse<TopicListItem>>()
         .WithTags("Topics");
 

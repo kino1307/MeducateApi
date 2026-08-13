@@ -34,6 +34,13 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
             : query.Where(c => c.TopicType != null && EF.Functions.ILike(c.TopicType, topicType));
     }
 
+    private static IQueryable<HealthTopic> ApplyCategoryFilter(IQueryable<HealthTopic> query, string? category)
+    {
+        return string.IsNullOrWhiteSpace(category)
+            ? query
+            : query.Where(c => c.Category != null && EF.Functions.ILike(c.Category, category));
+    }
+
     private static IQueryable<TopicListItem> ProjectToListItem(IQueryable<HealthTopic> query)
     {
         return query.Select(c => new TopicListItem(
@@ -48,31 +55,32 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
 
     private static class CacheKeys
     {
-        public static string All(int skip, int take, string? type) =>
-            $"topics:all:{skip}:{take}:{type?.ToLowerInvariant()}";
+        public static string All(int skip, int take, string? type, string? category) =>
+            $"topics:all:{skip}:{take}:{type?.ToLowerInvariant()}:{category?.ToLowerInvariant()}";
 
-        public static string Count(string? type) =>
-            $"topics:count:{type?.ToLowerInvariant()}";
+        public static string Count(string? type, string? category) =>
+            $"topics:count:{type?.ToLowerInvariant()}:{category?.ToLowerInvariant()}";
 
         public static string ByName(string name) =>
             $"topics:name:{name.ToLowerInvariant()}";
 
-        public static string Search(string query, int skip, int take, string? type) =>
-            $"topics:search:{query.ToLowerInvariant()}:{skip}:{take}:{type?.ToLowerInvariant()}";
+        public static string Search(string query, int skip, int take, string? type, string? category) =>
+            $"topics:search:{query.ToLowerInvariant()}:{skip}:{take}:{type?.ToLowerInvariant()}:{category?.ToLowerInvariant()}";
 
-        public static string SearchCount(string query, string? type) =>
-            $"topics:searchcount:{query.ToLowerInvariant()}:{type?.ToLowerInvariant()}";
+        public static string SearchCount(string query, string? type, string? category) =>
+            $"topics:searchcount:{query.ToLowerInvariant()}:{type?.ToLowerInvariant()}:{category?.ToLowerInvariant()}";
 
         public const string Types = "topics:types";
+        public const string Categories = "topics:categories";
     }
 
-    public async Task<IEnumerable<TopicListItem>> GetAllAsync(int skip = 0, int take = 50, string? topicType = null, CancellationToken ct = default)
+    public async Task<IEnumerable<TopicListItem>> GetAllAsync(int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default)
     {
-        var cacheKey = CacheKeys.All(skip, take, topicType);
+        var cacheKey = CacheKeys.All(skip, take, topicType, category);
         if (cache.TryGetValue(cacheKey, out IEnumerable<TopicListItem>? cached) && cached is not null)
             return cached;
 
-        var query = ApplyTypeFilter(CategorizedQuery(context.HealthTopics), topicType);
+        var query = ApplyCategoryFilter(ApplyTypeFilter(CategorizedQuery(context.HealthTopics), topicType), category);
 
         var results = await ProjectToListItem(
                 query.OrderBy(c => c.Name).Skip(skip).Take(take))
@@ -82,13 +90,13 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         return results;
     }
 
-    public async Task<int> GetCountAsync(string? topicType = null, CancellationToken ct = default)
+    public async Task<int> GetCountAsync(string? topicType = null, string? category = null, CancellationToken ct = default)
     {
-        var cacheKey = CacheKeys.Count(topicType);
+        var cacheKey = CacheKeys.Count(topicType, category);
         if (cache.TryGetValue(cacheKey, out int cached))
             return cached;
 
-        var query = ApplyTypeFilter(CategorizedQuery(context.HealthTopics), topicType);
+        var query = ApplyCategoryFilter(ApplyTypeFilter(CategorizedQuery(context.HealthTopics), topicType), category);
 
         var count = await query.CountAsync(ct);
         CacheSet(cacheKey, count);
@@ -118,18 +126,20 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         .Replace("%", "\\%")
         .Replace("_", "\\_");
 
-    public async Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, CancellationToken ct = default)
+    public async Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default)
     {
-        var cacheKey = CacheKeys.Search(query, skip, take, topicType);
+        var cacheKey = CacheKeys.Search(query, skip, take, topicType, category);
         if (cache.TryGetValue(cacheKey, out IEnumerable<TopicListItem>? cached) && cached is not null)
             return cached;
 
         var escaped = EscapeLikeQuery(query);
 
-        var dbQuery = ApplyTypeFilter(
-            CategorizedQuery(context.HealthTopics)
-                .Where(c => EF.Functions.ILike(c.Name, $"%{escaped}%", "\\")),
-            topicType);
+        var dbQuery = ApplyCategoryFilter(
+            ApplyTypeFilter(
+                CategorizedQuery(context.HealthTopics)
+                    .Where(c => EF.Functions.ILike(c.Name, $"%{escaped}%", "\\")),
+                topicType),
+            category);
 
         var results = await ProjectToListItem(
                 dbQuery.OrderBy(c => c.Name).Skip(skip).Take(take))
@@ -139,18 +149,20 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         return results;
     }
 
-    public async Task<int> SearchCountAsync(string query, string? topicType = null, CancellationToken ct = default)
+    public async Task<int> SearchCountAsync(string query, string? topicType = null, string? category = null, CancellationToken ct = default)
     {
-        var cacheKey = CacheKeys.SearchCount(query, topicType);
+        var cacheKey = CacheKeys.SearchCount(query, topicType, category);
         if (cache.TryGetValue(cacheKey, out int cached))
             return cached;
 
         var escaped = EscapeLikeQuery(query);
 
-        var dbQuery = ApplyTypeFilter(
-            CategorizedQuery(context.HealthTopics)
-                .Where(c => EF.Functions.ILike(c.Name, $"%{escaped}%", "\\")),
-            topicType);
+        var dbQuery = ApplyCategoryFilter(
+            ApplyTypeFilter(
+                CategorizedQuery(context.HealthTopics)
+                    .Where(c => EF.Functions.ILike(c.Name, $"%{escaped}%", "\\")),
+                topicType),
+            category);
 
         var count = await dbQuery.CountAsync(ct);
         CacheSet(cacheKey, count);
@@ -173,6 +185,23 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
 
         CacheSet(CacheKeys.Types, (IReadOnlyList<TopicTypeSummary>)types);
         return types;
+    }
+
+    public async Task<IReadOnlyList<TopicCategorySummary>> GetDistinctCategoriesAsync(CancellationToken ct = default)
+    {
+        if (cache.TryGetValue(CacheKeys.Categories, out IReadOnlyList<TopicCategorySummary>? cached) && cached is not null)
+            return cached;
+
+        var categories = (await CategorizedQuery(context.HealthTopics)
+            .GroupBy(c => c.Category!)
+            .Select(g => new { Category = g.Key, Count = g.Count() })
+            .OrderBy(c => c.Category)
+            .ToListAsync(ct))
+            .Select(c => new TopicCategorySummary(c.Category, c.Count))
+            .ToList();
+
+        CacheSet(CacheKeys.Categories, (IReadOnlyList<TopicCategorySummary>)categories);
+        return categories;
     }
 
     public void InvalidateCache()

@@ -434,12 +434,13 @@ public class TopicIngestionServiceTests
         public bool CacheInvalidated { get; private set; }
         public void InvalidateCache() => CacheInvalidated = true;
 
-        public Task<IEnumerable<TopicListItem>> GetAllAsync(int skip = 0, int take = 50, string? topicType = null, CancellationToken ct = default) => throw new NotImplementedException();
-        public Task<int> GetCountAsync(string? topicType = null, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<IEnumerable<TopicListItem>> GetAllAsync(int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<int> GetCountAsync(string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<HealthTopic?> GetByNameAsync(string name, CancellationToken ct = default) => throw new NotImplementedException();
-        public Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, CancellationToken ct = default) => throw new NotImplementedException();
-        public Task<int> SearchCountAsync(string query, string? topicType = null, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<int> SearchCountAsync(string query, string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<TopicTypeSummary>> GetDistinctTypesAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<IReadOnlyList<TopicCategorySummary>> GetDistinctCategoriesAsync(CancellationToken ct = default) => throw new NotImplementedException();
     }
 
     private sealed class FakeIcd11CodingService : IIcd11CodingService
