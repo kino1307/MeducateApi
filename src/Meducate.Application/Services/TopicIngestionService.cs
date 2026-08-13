@@ -251,16 +251,35 @@ internal sealed class TopicIngestionService(
                         existing.LastSourceRefresh = DateTime.UtcNow;
                         existingNamesSet.Add(comparison.PreferredName);
                         await _writeRepo.SaveChangesAsync(ct);
+                        continue;
                     }
-                    else if (string.Equals(comparison.PreferredName, group.Key, StringComparison.OrdinalIgnoreCase))
+
+                    if (string.Equals(comparison.PreferredName, group.Key, StringComparison.OrdinalIgnoreCase))
                     {
-                        // LLM says they're different subjects — skip, don't merge
+                        // LLM says they're different subjects — the parser's own normalization
+                        // collapsed the candidate's name into the existing entry (e.g. "A1C" the
+                        // test parsed to "Type 2 Diabetes"), not a true synonym. Keep it as its
+                        // own topic under the originally-discovered name instead of dropping it.
+                        var disambiguatedName = TopicHelpers.ToTitleCase(group.Key);
+                        if (existingNamesSet.Contains(disambiguatedName))
+                        {
+                            if (_logger.IsEnabled(LogLevel.Information))
+                                _logger.LogInformation(
+                                    "Skipping '{Discovered}' — different subject from '{Existing}' but original name also taken",
+                                    group.Key, existing.Name);
+
+                            console?.WriteLine($"  [{group.Key}] Skipped — different subject from '{existing.Name}', name also taken.");
+                            continue;
+                        }
+
                         if (_logger.IsEnabled(LogLevel.Information))
                             _logger.LogInformation(
-                                "Skipping '{Discovered}' — LLM determined it is a different subject from '{Existing}'",
-                                group.Key, existing.Name);
+                                "'{Discovered}' is a different subject from '{Existing}' — keeping as separate topic '{Name}'",
+                                group.Key, existing.Name, disambiguatedName);
 
-                        console?.WriteLine($"  [{group.Key}] Skipped — different subject from '{existing.Name}'.");
+                        console?.WriteLine($"  [{group.Key}] Different subject from '{existing.Name}' — keeping as '{disambiguatedName}'.");
+                        structured.Name = disambiguatedName;
+                        // Falls through to the normal save path below.
                     }
                     else
                     {
@@ -294,9 +313,9 @@ internal sealed class TopicIngestionService(
 
                             console?.WriteLine($"  Skipped '{group.Key}' — resolved to existing '{structured.Name}', no new data.");
                         }
-                    }
 
-                    continue;
+                        continue;
+                    }
                 }
 
                 var qualityIssue = TopicHelpers.CheckTopicQuality(structured);
