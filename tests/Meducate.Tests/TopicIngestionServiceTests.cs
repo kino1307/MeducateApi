@@ -437,6 +437,7 @@ public class TopicIngestionServiceTests
         public Task<IEnumerable<TopicListItem>> GetAllAsync(int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<int> GetCountAsync(string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<HealthTopic?> GetByNameAsync(string name, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<HealthTopic?> GetByIcd11CodeAsync(string icd11Code, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<int> SearchCountAsync(string query, string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<TopicTypeSummary>> GetDistinctTypesAsync(CancellationToken ct = default) => throw new NotImplementedException();

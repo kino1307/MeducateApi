@@ -64,6 +64,9 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         public static string ByName(string name) =>
             $"topics:name:{name.ToLowerInvariant()}";
 
+        public static string ByIcd11Code(string code) =>
+            $"topics:icd11:{code.ToLowerInvariant()}";
+
         public static string Search(string query, int skip, int take, string? type, string? category) =>
             $"topics:search:{query.ToLowerInvariant()}:{skip}:{take}:{type?.ToLowerInvariant()}:{category?.ToLowerInvariant()}";
 
@@ -115,6 +118,23 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
             .FirstOrDefaultAsync(c => EF.Functions.ILike(c.Name, name), ct);
 
         // Cache hits for 10 min, misses for 2 min to avoid repeated DB lookups
+        var duration = result is not null ? CacheDuration : NegativeCacheDuration;
+        CacheSet(cacheKey, (object?)result ?? NegativeCacheSentinel, duration);
+
+        return result;
+    }
+
+    public async Task<HealthTopic?> GetByIcd11CodeAsync(string icd11Code, CancellationToken ct = default)
+    {
+        var cacheKey = CacheKeys.ByIcd11Code(icd11Code);
+        if (cache.TryGetValue(cacheKey, out object? cached))
+            return ReferenceEquals(cached, NegativeCacheSentinel) ? null : cached as HealthTopic;
+
+        // Codes are case-sensitive per the WHO ICD-11 spec (e.g. "5A11"), but ILike keeps
+        // this forgiving for callers who don't get the casing exactly right.
+        var result = await CategorizedQuery(context.HealthTopics)
+            .FirstOrDefaultAsync(c => c.Icd11Code != null && EF.Functions.ILike(c.Icd11Code, icd11Code), ct);
+
         var duration = result is not null ? CacheDuration : NegativeCacheDuration;
         CacheSet(cacheKey, (object?)result ?? NegativeCacheSentinel, duration);
 

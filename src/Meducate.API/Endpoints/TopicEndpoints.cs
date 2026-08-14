@@ -72,6 +72,32 @@ internal static class TopicEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .WithTags("Topics");
 
+        app.MapGet("/topics/icd11/{code}", [RequiresApiKey] async (string code, ITopicRepository repo, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(code) || code.Length > ApiConstants.MaxQueryLength)
+                return Results.Problem(
+                    detail: $"ICD-11 code must be between 1 and {ApiConstants.MaxQueryLength} characters.",
+                    title: "Bad Request",
+                    statusCode: StatusCodes.Status400BadRequest);
+
+            var topic = await repo.GetByIcd11CodeAsync(code, ct);
+
+            if (topic is null)
+                return Results.Problem(
+                    detail: "No topic found with that ICD-11 code.",
+                    title: "Not Found",
+                    statusCode: StatusCodes.Status404NotFound);
+
+            return Results.Ok(topic);
+        })
+        .WithName("GetTopicByIcd11Code")
+        .WithSummary("Get a topic by its ICD-11 code")
+        .WithDescription("Returns the health topic matching the given WHO ICD-11 code (e.g. \"5A11\"), the reverse of the icd11Code field returned on every topic. Only topics with a confidently-matched ICD-11 code can be found this way -- not every topic has one.")
+        .Produces<HealthTopic>()
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .WithTags("Topics");
+
         app.MapGet("/topics/{name}", [RequiresApiKey] async (string name, ITopicRepository repo, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(name) || name.Length > ApiConstants.MaxQueryLength)

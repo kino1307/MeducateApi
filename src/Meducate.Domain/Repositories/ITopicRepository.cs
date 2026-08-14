@@ -7,6 +7,7 @@ internal interface ITopicRepository
     Task<IEnumerable<TopicListItem>> GetAllAsync(int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default);
     Task<int> GetCountAsync(string? topicType = null, string? category = null, CancellationToken ct = default);
     Task<HealthTopic?> GetByNameAsync(string name, CancellationToken ct = default);
+    Task<HealthTopic?> GetByIcd11CodeAsync(string icd11Code, CancellationToken ct = default);
     Task<IEnumerable<TopicListItem>> SearchAsync(string query, int skip = 0, int take = 50, string? topicType = null, string? category = null, CancellationToken ct = default);
     Task<int> SearchCountAsync(string query, string? topicType = null, string? category = null, CancellationToken ct = default);
     Task<IReadOnlyList<TopicTypeSummary>> GetDistinctTypesAsync(CancellationToken ct = default);
