@@ -38,6 +38,24 @@ internal static class TopicHelpers
         return string.Join("\n---\n", parts);
     }
 
+    // Fields the extraction prompt itself documents as "otherwise []" for a given type --
+    // i.e. an empty array there is a valid, expected answer, not a sign the LLM failed.
+    // Keeping this in sync with GetTypeInstructions in SemanticKernelLLMProcessor.
+    private static readonly HashSet<string> TypesWhereEmptyObservationsIsValid = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Procedure", "Diagnostic Test", "Vaccine"
+    };
+
+    private static readonly HashSet<string> TypesWhereEmptyFactorsIsValid = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Procedure", "Diagnostic Test", "Anatomy"
+    };
+
+    private static readonly HashSet<string> TypesWhereEmptyActionsIsValid = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Anatomy"
+    };
+
     internal static string? CheckTopicQuality(HealthTopic topic)
     {
         if (string.IsNullOrWhiteSpace(topic.Summary) || topic.Summary.Length < MinSummaryLength)
@@ -47,13 +65,13 @@ internal static class TopicHelpers
         if (topic.Summary.Trim().Equals(topic.Name.Trim(), StringComparison.OrdinalIgnoreCase))
             return "summary just restates the topic name";
 
-        if (topic.Observations is not { Count: > 0 })
+        if (topic.Observations is not { Count: > 0 } && !TypesWhereEmptyObservationsIsValid.Contains(topic.TopicType ?? ""))
             return "no observations populated";
 
-        if (topic.Factors is not { Count: > 0 })
+        if (topic.Factors is not { Count: > 0 } && !TypesWhereEmptyFactorsIsValid.Contains(topic.TopicType ?? ""))
             return "no factors populated";
 
-        if (topic.Actions is not { Count: > 0 })
+        if (topic.Actions is not { Count: > 0 } && !TypesWhereEmptyActionsIsValid.Contains(topic.TopicType ?? ""))
             return "no actions populated";
 
         return null;

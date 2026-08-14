@@ -103,6 +103,45 @@ public class TopicHelpersTests
     }
 
     [Fact]
+    public void CheckTopicQuality_ReturnsNull_ForDiagnosticTest_WithEmptyObservationsAndFactors()
+    {
+        // The extraction prompt tells the LLM these are "otherwise []" for this type --
+        // an empty array here is a valid answer, not a sign of a bad extraction.
+        var topic = new HealthTopic
+        {
+            Name = "Urinalysis",
+            TopicType = "Diagnostic Test",
+            Summary = new string('A', 100),
+            Observations = [],
+            Factors = [],
+            Actions = ["Check for urinary tract infection"]
+        };
+
+        Assert.Null(TopicHelpers.CheckTopicQuality(topic));
+    }
+
+    [Fact]
+    public void CheckTopicQuality_StillRejectsEmptyActions_ForDiagnosticTest()
+    {
+        // Actions ("what it treats or tests for") is NOT documented as "otherwise []"
+        // for this type, so it should still be enforced.
+        var topic = new HealthTopic
+        {
+            Name = "Urinalysis",
+            TopicType = "Diagnostic Test",
+            Summary = new string('A', 100),
+            Observations = [],
+            Factors = [],
+            Actions = []
+        };
+
+        var result = TopicHelpers.CheckTopicQuality(topic);
+
+        Assert.NotNull(result);
+        Assert.Contains("no actions", result);
+    }
+
+    [Fact]
     public void BuildMergedRawSource_MergesMultipleSources()
     {
         var sources = new[]
