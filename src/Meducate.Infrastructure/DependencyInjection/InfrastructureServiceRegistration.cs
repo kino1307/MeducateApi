@@ -79,8 +79,15 @@ internal static class InfrastructureServiceRegistration
             client.DefaultRequestHeaders.Add("User-Agent", "MeducateAPI/1.0 (medical-education-platform)");
             client.Timeout = TimeSpan.FromSeconds(30);
         });
+        services.AddHttpClient<MedlinePlusDefinitionsProvider>(client =>
+        {
+            client.BaseAddress = new Uri("https://medlineplus.gov/");
+            client.DefaultRequestHeaders.Add("User-Agent", "MeducateAPI/1.0 (medical-education-platform)");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
         services.AddScoped<IMedicalDataProvider>(sp => sp.GetRequiredService<MedlinePlusDataProvider>());
         services.AddScoped<IMedicalDataProvider>(sp => sp.GetRequiredService<PubMedDataProvider>());
+        services.AddScoped<IMedicalDataProvider>(sp => sp.GetRequiredService<MedlinePlusDefinitionsProvider>());
 
         // ICD-11 coding — optional. Without WHO credentials, fall back to a no-op so
         // local dev/CI/integration tests keep working without registering for an API key.
