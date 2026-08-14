@@ -441,6 +441,8 @@ public class TopicIngestionServiceTests
         public Task<int> SearchCountAsync(string query, string? topicType = null, string? category = null, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<TopicTypeSummary>> GetDistinctTypesAsync(CancellationToken ct = default) => throw new NotImplementedException();
         public Task<IReadOnlyList<TopicCategorySummary>> GetDistinctCategoriesAsync(CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<IEnumerable<TopicChangeItem>> GetChangedSinceAsync(DateTime since, int skip = 0, int take = 50, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<int> GetChangedSinceCountAsync(DateTime since, CancellationToken ct = default) => throw new NotImplementedException();
     }
 
     private sealed class FakeIcd11CodingService : IIcd11CodingService

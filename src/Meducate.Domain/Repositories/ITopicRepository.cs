@@ -11,6 +11,8 @@ internal interface ITopicRepository
     Task<int> SearchCountAsync(string query, string? topicType = null, string? category = null, CancellationToken ct = default);
     Task<IReadOnlyList<TopicTypeSummary>> GetDistinctTypesAsync(CancellationToken ct = default);
     Task<IReadOnlyList<TopicCategorySummary>> GetDistinctCategoriesAsync(CancellationToken ct = default);
+    Task<IEnumerable<TopicChangeItem>> GetChangedSinceAsync(DateTime since, int skip = 0, int take = 50, CancellationToken ct = default);
+    Task<int> GetChangedSinceCountAsync(DateTime since, CancellationToken ct = default);
     void InvalidateCache();
 }
 
@@ -35,3 +37,16 @@ internal sealed record TopicCategorySummary(string Category, int Count)
 {
     public string Href => $"/api/v1/topics?category={Uri.EscapeDataString(Category)}";
 }
+
+/// <summary>
+/// A topic added or updated since a given point in time. "Added" means the topic has
+/// never been reprocessed since creation (Version == 1) — an approximation, not a
+/// precise add/update distinction. Removals are not currently tracked.
+/// </summary>
+internal sealed record TopicChangeItem(
+    string Name,
+    string? TopicType,
+    string? Category,
+    string ChangeType,
+    int Version,
+    DateTime LastUpdated);

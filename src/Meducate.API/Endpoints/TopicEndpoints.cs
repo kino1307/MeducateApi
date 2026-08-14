@@ -30,6 +30,27 @@ internal static class TopicEndpoints
         .Produces<IReadOnlyList<TopicCategorySummary>>()
         .WithTags("Topics");
 
+        app.MapGet("/topics/changes", [RequiresApiKey] async (string? since, int? skip, int? take, int? page, int? pageSize, ITopicRepository repo, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(since) || !DateTime.TryParse(since, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var sinceUtc))
+                return Results.Problem(
+                    detail: "`since` is required and must be a valid ISO 8601 date/time (e.g. 2026-08-01T00:00:00Z).",
+                    title: "Bad Request",
+                    statusCode: StatusCodes.Status400BadRequest);
+
+            var (s, t) = ResolvePaging(skip, take, page, pageSize);
+
+            var changes = await repo.GetChangedSinceAsync(sinceUtc, s, t, ct);
+            var totalCount = await repo.GetChangedSinceCountAsync(sinceUtc, ct);
+            return Results.Ok(new PaginatedResponse<TopicChangeItem>(changes, totalCount, s, t));
+        })
+        .WithName("ListTopicChanges")
+        .WithSummary("List topics added or updated since a given time")
+        .WithDescription("Returns topics added or updated since the given `since` timestamp (ISO 8601, e.g. 2026-08-01T00:00:00Z), most recent first. `changeType` is \"Added\" for topics never reprocessed since creation, otherwise \"Updated\" — an approximation, not an exact add/update log. Removed topics are not currently tracked by this endpoint.")
+        .Produces<PaginatedResponse<TopicChangeItem>>()
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .WithTags("Topics");
+
         app.MapGet("/topics/search", [RequiresApiKey] async (string? query, int? skip, int? take, int? page, int? pageSize, string? type, string? category, ITopicRepository repo, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(query) || query.Length > ApiConstants.MaxQueryLength)

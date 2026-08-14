@@ -204,6 +204,32 @@ internal sealed class TopicRepository(MeducateDbContext context, IMemoryCache ca
         return categories;
     }
 
+    // Deliberately uncached: `since` varies per-request with no realistic reuse across
+    // callers, so caching this would just add memory pressure for near-zero hit rate.
+    public async Task<IEnumerable<TopicChangeItem>> GetChangedSinceAsync(DateTime since, int skip = 0, int take = 50, CancellationToken ct = default)
+    {
+        return await CategorizedQuery(context.HealthTopics)
+            .Where(c => c.LastUpdated > since)
+            .OrderByDescending(c => c.LastUpdated)
+            .Skip(skip)
+            .Take(take)
+            .Select(c => new TopicChangeItem(
+                c.Name,
+                c.TopicType,
+                c.Category,
+                c.Version == 1 ? "Added" : "Updated",
+                c.Version,
+                c.LastUpdated))
+            .ToListAsync(ct);
+    }
+
+    public async Task<int> GetChangedSinceCountAsync(DateTime since, CancellationToken ct = default)
+    {
+        return await CategorizedQuery(context.HealthTopics)
+            .Where(c => c.LastUpdated > since)
+            .CountAsync(ct);
+    }
+
     public void InvalidateCache()
     {
         var old = Interlocked.Exchange(ref _cacheTokenSource, new CancellationTokenSource());
