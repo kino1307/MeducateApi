@@ -491,7 +491,9 @@ internal sealed partial class SemanticKernelLLMProcessor(Kernel kernel, ILogger<
                 """
                 This topic is a NUTRIENT/DIETARY SUBSTANCE. Interpret fields accordingly:
                 - "actions": list health benefits and medical uses mentioned in the text
-                - "observations": list deficiency symptoms or signs of excess mentioned in the text
+                - "observations": list deficiency symptoms or signs of excess mentioned in the text,
+                  otherwise []. Short glossary-style definitions often just define what the
+                  nutrient is without stating deficiency/excess symptoms -- don't invent any.
                 - "factors": list dietary sources and factors affecting levels mentioned in the text
                 Prefer items from the source text. See FALLBACK FOR SPARSE SOURCES
                 if the text is descriptive prose without discrete lists.

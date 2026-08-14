@@ -142,6 +142,24 @@ public class TopicHelpersTests
     }
 
     [Fact]
+    public void CheckTopicQuality_ReturnsNull_ForNutrient_WithEmptyObservations()
+    {
+        // Short glossary-style nutrient definitions often just define the substance
+        // without stating deficiency/excess symptoms -- empty here is expected too.
+        var topic = new HealthTopic
+        {
+            Name = "Folate",
+            TopicType = "Nutrient",
+            Summary = new string('A', 100),
+            Observations = [],
+            Factors = ["Leafy greens", "Fortified grains"],
+            Actions = ["Prevents neural tube defects in pregnancy"]
+        };
+
+        Assert.Null(TopicHelpers.CheckTopicQuality(topic));
+    }
+
+    [Fact]
     public void BuildMergedRawSource_MergesMultipleSources()
     {
         var sources = new[]

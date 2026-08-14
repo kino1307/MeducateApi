@@ -43,7 +43,7 @@ internal static class TopicHelpers
     // Keeping this in sync with GetTypeInstructions in SemanticKernelLLMProcessor.
     private static readonly HashSet<string> TypesWhereEmptyObservationsIsValid = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Procedure", "Diagnostic Test", "Vaccine"
+        "Procedure", "Diagnostic Test", "Vaccine", "Nutrient"
     };
 
     private static readonly HashSet<string> TypesWhereEmptyFactorsIsValid = new(StringComparer.OrdinalIgnoreCase)
